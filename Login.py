@@ -22,7 +22,7 @@ class Ui_MainWindow():
         ### Background
         self.Bg = QtWidgets.QLabel(self.centralwidget)
         self.Bg.setGeometry(QtCore.QRect(0, 0, 800, 500))
-        self.Bg.setPixmap(QtGui.QPixmap(":/Image/Background.jpg"))
+        self.Bg.setPixmap(QtGui.QPixmap(":/Image/Back.jpg"))
         self.Bg.setScaledContents(True)
         self.Bg.setObjectName("Bg")
         ### User
