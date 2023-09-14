@@ -33,11 +33,11 @@ class LoginForm(QtWidgets.QWidget):
                 padding: 6px;
             }
             QPushButton:hover {
-                background-color: #cf7500;
+                background-color: #FF0000;
                 border-style: inset;
             }
             QPushButton:pressed {
-                background-color: #ffa126;
+                background-color: #FF0000;
                 border-style: inset;
             }
             """
@@ -158,7 +158,7 @@ class LoginForm(QtWidgets.QWidget):
                                       "opacity: 200;\n"
                                       "")
         self.pushButton.setAutoDefault(True)
-        self.formLayout_2.setWidget(7, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
 
         """self.pushButton_2 = QtWidgets.QPushButton(self.widget)
         self.pushButton_2.setMinimumSize(QtCore.QSize(0, 60))
@@ -175,7 +175,7 @@ class LoginForm(QtWidgets.QWidget):
         """
 
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(6, QtWidgets.QFormLayout.SpanningRole, spacerItem)
+        self.formLayout_2.setItem(7, QtWidgets.QFormLayout.SpanningRole, spacerItem)
         self.verticalLayout_3.addLayout(self.formLayout_2)
 
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -189,7 +189,7 @@ class LoginForm(QtWidgets.QWidget):
         #Error de contraseña y/o incorrectas
         self.error_label = QtWidgets.QLabel(self.widget)
         self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\";")
-        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.error_label)
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.SpanningRole, self.error_label)
 
 
         self.retranslateUi()
@@ -200,16 +200,18 @@ class LoginForm(QtWidgets.QWidget):
     def login(self):
         username = self.lineEdit.text()
         password = self.lineEdit_2.text()
+        read = username != '' and password != ''
         answer = username == self.Data["user"] and password == self.Data["password"]
 
-        if answer:
-            self.main_slide = MainSlide()
-            self.main_slide.show()
-            self.close()
+        if read:
+            if answer:
+                self.main_slide = MainSlide()
+                self.main_slide.show()
+                self.close()
+            else:
+                self.error_label.setText("Usuario y/o contraseña incorrectos")
         else:
-            self.error_label.setText("Usuario y/o contraseña incorrectos")
-
-
+            self.error_label.setText("Rellena todos los campos")
 
 
 
