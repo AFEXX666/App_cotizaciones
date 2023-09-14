@@ -22,7 +22,7 @@ class Ui_MainWindow():
         ### Background
         self.Bg = QtWidgets.QLabel(self.centralwidget)
         self.Bg.setGeometry(QtCore.QRect(0, 0, 800, 500))
-        self.Bg.setPixmap(QtGui.QPixmap(":/Image/Back.jpg"))
+        self.Bg.setPixmap(QtGui.QPixmap(":/Image/back.png"))
         self.Bg.setScaledContents(True)
         self.Bg.setObjectName("Bg")
         ### User
@@ -35,7 +35,7 @@ class Ui_MainWindow():
         self.Copyright = QtWidgets.QLabel(self.centralwidget)
         self.Copyright.setGeometry(QtCore.QRect(725, 482, 68, 10))
         self.Copyright.setObjectName("Copyright")
-        self.Copyright.setText(self.Trans("MainWindow", "©Uriel Saenz"))
+        self.Copyright.setText(self.Trans("MainWindow", "©MahiKaishar"))
         ### Call
         self.FLogin()        
 
