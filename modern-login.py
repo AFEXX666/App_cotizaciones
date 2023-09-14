@@ -68,17 +68,17 @@ class LoginForm(QtWidgets.QWidget):
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
         self.verticalLayout_3.setContentsMargins(-1, 15, -1, -1)
 
+        #Label del icono de perfil
         self.label = QtWidgets.QLabel(self.widget)
         self.label.setMinimumSize(QtCore.QSize(150, 150))
         self.label.setMaximumSize(QtCore.QSize(150, 150))
         self.label.setStyleSheet("image: url(icons/perfil_32x32.png);")
         self.verticalLayout_3.addWidget(self.label, 0, QtCore.Qt.AlignHCenter)
-
         self.label = QtWidgets.QLabel(self.widget)
         self.label.setMinimumSize(QtCore.QSize(50, 50))
         self.label.setMaximumSize(QtCore.QSize(50, 50))
 
-        
+        #Label del nombre de la compañia
         self.company = QtWidgets.QLabel(self)
         self.company_2 = QtWidgets.QLabel(self) # Aumenta la altura máxima para que el texto pueda acomodarse abajo
         self.company.setText("Ingeniería Integral")
@@ -87,7 +87,7 @@ class LoginForm(QtWidgets.QWidget):
         self.company_2.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\"; text-align: center;")
         self.verticalLayout_3.addWidget(self.company, 0, QtCore.Qt.AlignHCenter)
         self.verticalLayout_3.addWidget(self.company_2, 0, QtCore.Qt.AlignHCenter)
-        
+
         self.formLayout_2 = QtWidgets.QFormLayout()
         self.formLayout_2.setContentsMargins(50, 30, 59, -1)
 
@@ -186,23 +186,29 @@ class LoginForm(QtWidgets.QWidget):
         self.horizontalLayout_3.setStretch(0, 1)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
 
+        #Error de contraseña y/o incorrectas
+        self.error_label = QtWidgets.QLabel(self.widget)
+        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\";")
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.error_label)
+
+
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
+
         self.pushButton.clicked.connect(self.login)
 
     def login(self):
-        # Obtiene el nombre de usuario y la contraseña ingresados por el usuario
         username = self.lineEdit.text()
         password = self.lineEdit_2.text()
+        answer = username == self.Data["user"] and password == self.Data["password"]
 
-        # Comprueba si las credenciales son válidas
-        if username == self.Data["user"] and password == self.Data["password"]:
+        if answer:
             self.main_slide = MainSlide()
             self.main_slide.show()
             self.close()
         else:
-            # Muestra un mensaje de error si las credenciales son incorrectas
-            QtWidgets.QMessageBox.warning(self, "Error", "Credenciales incorrectas")
+            self.error_label.setText("Usuario y/o contraseña incorrectos")
+
 
 
 
