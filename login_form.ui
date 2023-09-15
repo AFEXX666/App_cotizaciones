@@ -71,7 +71,7 @@
           </property>
           <property name="styleSheet">
            <string notr="true">color: black;
-background-color: orange;
+background-color: #FF0000;
 font: 12pt &quot;Arial&quot;;
 border-radius: 1px;
 </string>
@@ -187,7 +187,7 @@ font: 15pt &quot;Verdana&quot;;</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QLineEdit {
-      color: orange;
+      color: #FF0000;
       font: 15pt &quot;Verdana&quot;;
       border: None;
       border-bottom-color: white;
@@ -234,7 +234,7 @@ font: 15pt &quot;Verdana&quot;;</string>
             <item row="3" column="0" colspan="2">
              <widget class="Line" name="line_2">
               <property name="styleSheet">
-               <string notr="true">border: 2px solid orange;</string>
+               <string notr="true">border: 2px solid #FF0000;</string>
               </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -271,7 +271,7 @@ font: 15pt &quot;Verdana&quot;;</string>
               <property name="styleSheet">
                <string notr="true">color: rgb(231, 231, 231);
 font: 17pt &quot;Verdana&quot;;
-border: 2px solid orange;
+border: 2px solid #FF0000;
 padding: 5px;
 border-radius: 3px;
 opacity: 200;
@@ -302,7 +302,7 @@ opacity: 200;
               <property name="styleSheet">
                <string notr="true">color: rgb(231, 231, 231);
 font: 17pt &quot;Verdana&quot;;
-border: 2px solid orange;
+border: 2px solid #FF0000;
 padding: 5px;
 border-radius: 3px;
 opacity: 200;

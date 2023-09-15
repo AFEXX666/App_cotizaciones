@@ -33,11 +33,11 @@ class LoginForm(QtWidgets.QWidget):
                 padding: 6px;
             }
             QPushButton:hover {
-                background-color: #FF0000;
+                background-color: #cf7500;
                 border-style: inset;
             }
             QPushButton:pressed {
-                background-color: #FF0000;
+                background-color: #ffa126;
                 border-style: inset;
             }
             """
@@ -56,13 +56,29 @@ class LoginForm(QtWidgets.QWidget):
         self.verticalLayout_2.setContentsMargins(9, 0, 0, 0)
 
         self.pushButton_3 = QtWidgets.QPushButton(self.widget)
-        self.pushButton_3.setMinimumSize(QtCore.QSize(35, 25))
-        self.pushButton_3.setMaximumSize(QtCore.QSize(35, 25))
-        self.pushButton_3.setStyleSheet("color: white;\n"
-                                        "font: 13pt \"Verdana\";\n"
-                                        "border-radius: 1px;\n"
-                                        "opacity: 200;\n")
+        self.pushButton_3.setMinimumSize(QtCore.QSize(45, 35))
+        self.pushButton_3.setMaximumSize(QtCore.QSize(45, 35))
+        self.pushButton_3.setStyleSheet( """
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                padding: 6px;
+                color: white;
+                font: 13pt \"Verdana\";
+                border-radius: 1px;
+                opacity: 200;
+            }
+            QPushButton:hover {
+                background-color: #FF0000;
+                border-style: inset;
+            }
+            QPushButton:pressed {
+                background-color: #FF0000;
+                border-style: inset;
+            }
+            """)
         self.pushButton_3.clicked.connect(self.close)
+
         self.verticalLayout_2.addWidget(self.pushButton_3, 0, QtCore.Qt.AlignRight)
 
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()

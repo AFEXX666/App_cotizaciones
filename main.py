@@ -4,6 +4,7 @@ import icons_rc
 class MainSlide(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.piezas = [("motor", 2000), ("llantas", 1000)]
         self.mains()
 
     def mains(self):
@@ -31,16 +32,12 @@ class MainSlide(QtWidgets.QWidget):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-
         self.widget = QtWidgets.QWidget(self)
-        self.widget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.widget.setStyleSheet(".QWidget{background-color: rgb(20, 20, 40);}")
 
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_2.setContentsMargins(9, 0, 0, 0)
+        self.gridLayout = QtWidgets.QGridLayout(self.widget)
 
-        self.pushButton_3 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_3 = QtWidgets.QPushButton("X", self)
         self.pushButton_3.setMinimumSize(QtCore.QSize(35, 25))
         self.pushButton_3.setMaximumSize(QtCore.QSize(35, 25))
         self.pushButton_3.setStyleSheet("color: white;\n"
@@ -48,14 +45,17 @@ class MainSlide(QtWidgets.QWidget):
                                         "border-radius: 1px;\n"
                                         "opacity: 200;\n")
         self.pushButton_3.clicked.connect(self.close)
-        self.verticalLayout_2.addWidget(self.pushButton_3, 0, QtCore.Qt.AlignRight)
 
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setContentsMargins(-1, 15, -1, -1)
-        self.pushButton_3.setText("X")
-        
-        
+        # Agregar el botón "X" en la esquina superior derecha
+        self.gridLayout.addWidget(self.pushButton_3, 0, 1, QtCore.Qt.AlignTop | QtCore.Qt.AlignRight)
+
+        self.verticalLayout.addWidget(self.widget)
+
+        # Establecer el tamaño de la ventana para que ocupe toda la pantalla
         self.setGeometry(screen_geometry)
+
+        for p in self.piezas:
+            print(p[1])
 
 if __name__ == "__main__":
     import sys
