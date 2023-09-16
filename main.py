@@ -1,12 +1,14 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit
+import mysql.connector
 import icons_rc
-from db_consulta import MyWindow as QueryWindow
+from db_consulta import get_database_connection 
+
 
 class MainSlide(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.piezas = [("motor", 2000), ("llantas", 1000)]
+        # self.piezas = [("motor", 2000), ("llantas", 1000)]
         self.mains()
 
     def mains(self):
@@ -35,7 +37,8 @@ class MainSlide(QtWidgets.QWidget):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.widget = QtWidgets.QWidget(self)
-        self.widget.setStyleSheet(".QWidget{background-color: rgb(20, 20, 40);}")
+        self.widget.setStyleSheet(
+            ".QWidget{background-color: rgb(20, 20, 40);}")
 
         self.gridLayout = QtWidgets.QGridLayout(self.widget)
 
@@ -48,34 +51,21 @@ class MainSlide(QtWidgets.QWidget):
                                         "opacity: 200;\n")
         self.pushButton_3.clicked.connect(self.close)
 
-        # Agregar el botón "X" en la esquina superior derecha
-        self.gridLayout.addWidget(self.pushButton_3, 0, 1, QtCore.Qt.AlignTop | QtCore.Qt.AlignRight)
+        self.gridLayout.addWidget(
+            self.pushButton_3, 0, 1, QtCore.Qt.AlignTop | QtCore.Qt.AlignRight)
 
         self.verticalLayout.addWidget(self.widget)
 
-        # Establecer el tamaño de la ventana para que ocupe toda la pantalla
         self.setGeometry(screen_geometry)
+        con = get_database_connection()  # Llamar la función para obtener la conexión
+        cursor = con.cursor()  # Acceder al cursor de la conexión
+        sql = "SELECT * FROM cliente;"
+        cursor.execute(sql)
+        row = cursor.fetchone()
+        print(row)
+        con.close()  # Cerrar la conexión cuando hayas terminado
 
-        
-        self.button = QtWidgets.QPushButton('Consultar Datos', self)
-        self.button.setGeometry(10, 200, 150, 30)
 
-        # Conecta el botón a una función que consulte la base de datos y muestre los datos en un QTextEdit
-        self.button.clicked.connect(self.showDatabaseData)
-
-    def showDatabaseData(self):
-    # Llama a la función de consulta en el segundo archivo
-        datos = QueryWindow.queryDatabase(self)
-
-        for i, row in enumerate(datos):
-            label = QtWidgets.QLabel(self.widget)
-            label.setMinimumSize(QtCore.QSize(50, 50))
-            label.setMaximumSize(QtCore.QSize(100, 100))
-            label.setText(str(row[1])) 
-            label.setStyleSheet("color: #fff;")
-            label.move(10, 250 + i * 160)  #
-
-    
 
 if __name__ == "__main__":
     import sys

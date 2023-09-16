@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets
-
+from db_consulta import get_database_connection
+from werkzeug.security import check_password_hash, generate_password_hash
 import icons_rc  # pylint: disable=unused-import
 from customized import PasswordEdit
 from main import MainSlide
@@ -11,11 +12,15 @@ from main import MainSlide
 
 
 class LoginForm(QtWidgets.QWidget):
-    """Basic login form.
-    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.Data = {"user": "2134", "email": "uriel@gmail.com", "password": "6244", "slide_index": 1}
+        self.Data = {
+            "user": "2134", 
+            "email": "uriel@gmail.com", 
+            "password": "6244", 
+            "slide_index": 1
+            }
         self.setup_ui()
 
     def setup_ui(self):
@@ -214,10 +219,19 @@ class LoginForm(QtWidgets.QWidget):
         self.pushButton.clicked.connect(self.login)
 
     def login(self):
+        con = get_database_connection()  # Llamar la función para obtener la conexión
+        cursor = con.cursor()  # Acceder al cursor de la conexión
+        sql = "SELECT * FROM admin;"
+        cursor.execute(sql)
+        row = cursor.fetchone()
+        print(row)
+        con.close()  # Cerrar la conexión cuando hayas terminado
+
         username = self.lineEdit.text()
         password = self.lineEdit_2.text()
+        hashed_password = row[3]
         read = username != '' and password != ''
-        answer = username == self.Data["user"] and password == self.Data["password"]
+        answer = username == row[2] and check_password_hash(hashed_password, password)
 
         if read:
             if answer:
@@ -227,9 +241,7 @@ class LoginForm(QtWidgets.QWidget):
             else:
                 self.error_label.setText("Usuario y/o contraseña incorrectos")
         else:
-            self.error_label.setText("Rellena todos los campos")
-
-
+            self.error_label.setText("Llena todos los campos")
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
@@ -245,8 +257,6 @@ class LoginForm(QtWidgets.QWidget):
         self.lineEdit.setPlaceholderText(_translate("Form", "Usuario"))
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Contraseña"))
         #self.pushButton_2.setText(_translate("Form", "Register"))
-
-
 
 if __name__ == "__main__":
     import sys
