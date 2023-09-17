@@ -36,13 +36,15 @@ class LoginForm(QtWidgets.QWidget):
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
+                color: #db5e5e;
             }
             QPushButton:hover {
-                background-color: #cf7500;
+                background-color: #db5e5e;
                 border-style: inset;
+                color: #fff;
             }
             QPushButton:pressed {
-                background-color: #ffa126;
+                background-color: #db5e5e;
                 border-style: inset;
             }
             """
@@ -55,7 +57,7 @@ class LoginForm(QtWidgets.QWidget):
 
         self.widget = QtWidgets.QWidget(self)
         self.widget.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.widget.setStyleSheet(".QWidget{background-color: rgb(20, 20, 40);}")
+        self.widget.setStyleSheet(".QWidget{background-color: #fff;}")
 
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
         self.verticalLayout_2.setContentsMargins(9, 0, 0, 0)
@@ -63,25 +65,27 @@ class LoginForm(QtWidgets.QWidget):
         self.pushButton_3 = QtWidgets.QPushButton(self.widget)
         self.pushButton_3.setMinimumSize(QtCore.QSize(45, 35))
         self.pushButton_3.setMaximumSize(QtCore.QSize(45, 35))
-        self.pushButton_3.setStyleSheet( """
+        self.pushButton_3.setStyleSheet("""
             QPushButton {
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
-                color: white;
-                font: 13pt \"Verdana\";
+                color: #000000; /* Color de texto por defecto */
+                font: 13pt "Verdana";
                 border-radius: 1px;
                 opacity: 200;
             }
             QPushButton:hover {
                 background-color: #FF0000;
                 border-style: inset;
+                color: #FFFFFF; /* Cambia el color del texto en hover */
             }
             QPushButton:pressed {
                 background-color: #FF0000;
                 border-style: inset;
             }
-            """)
+        """)
+
         self.pushButton_3.clicked.connect(self.close)
 
         self.verticalLayout_2.addWidget(self.pushButton_3, 0, QtCore.Qt.AlignRight)
@@ -103,9 +107,9 @@ class LoginForm(QtWidgets.QWidget):
         self.company = QtWidgets.QLabel(self)
         self.company_2 = QtWidgets.QLabel(self) # Aumenta la altura máxima para que el texto pueda acomodarse abajo
         self.company.setText("Ingeniería Integral")
-        self.company.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\"; text-align: center;")
+        self.company.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; text-align: center;")
         self.company_2.setText("y Servicios")
-        self.company_2.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\"; text-align: center;")
+        self.company_2.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; text-align: center;")
         self.verticalLayout_3.addWidget(self.company, 0, QtCore.Qt.AlignHCenter)
         self.verticalLayout_3.addWidget(self.company_2, 0, QtCore.Qt.AlignHCenter)
 
@@ -113,20 +117,20 @@ class LoginForm(QtWidgets.QWidget):
         self.formLayout_2.setContentsMargins(50, 30, 59, -1)
 
         self.label_2 = QtWidgets.QLabel(self.widget)
-        self.label_2.setStyleSheet("color: rgb(231, 231, 231);\n"
+        self.label_2.setStyleSheet("color: #db5e5e;\n"
                                    "font: 15pt \"Verdana\";")
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_2)
 
         self.lineEdit = QtWidgets.QLineEdit(self.widget)
         self.lineEdit.setMinimumSize(QtCore.QSize(0, 40))
         self.lineEdit.setStyleSheet("QLineEdit {\n"
-                                    "color: rgb(231, 231, 231);\n"
+                                    "color: #db5e5e;\n"
                                     "font: 15pt \"Verdana\";\n"
                                     "border: None;\n"
-                                    "border-bottom-color: white;\n"
+                                    "border-bottom-color: #db5e5e;\n"
                                     "border-radius: 10px;\n"
                                     "padding: 0 8px;\n"
-                                    "background: rgb(20, 20, 40);\n"
+                                    "background: #fff;\n"
                                     "selection-background-color: darkgray;\n"
                                     "}")
         self.lineEdit.setFocus(True)
@@ -138,26 +142,26 @@ class LoginForm(QtWidgets.QWidget):
         self.lineEdit_2 = PasswordEdit(self.widget)
         self.lineEdit_2.setMinimumSize(QtCore.QSize(0, 40))
         self.lineEdit_2.setStyleSheet("QLineEdit {\n"
-                                      "color: orange;\n"
+                                      "color: #db5e5e;\n"
                                       "font: 15pt \"Verdana\";\n"
                                       "border: None;\n"
-                                      "border-bottom-color: white;\n"
+                                      "border-bottom-color: #db5e5e;\n"
                                       "border-radius: 10px;\n"
                                       "padding: 0 8px;\n"
-                                      "background: rgb(20, 20, 40);\n"
+                                      "background: #fff;\n"
                                       "selection-background-color: darkgray;\n"
                                       "}")
         self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
         self.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
 
         self.line = QtWidgets.QFrame(self.widget)
-        self.line.setStyleSheet("border: 2px solid white;")
+        self.line.setStyleSheet("border: 2px solid #db5e5e;")
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.SpanningRole, self.line)
 
         self.line_2 = QtWidgets.QFrame(self.widget)
-        self.line_2.setStyleSheet("border: 2px solid orange;")
+        self.line_2.setStyleSheet("border: 2px solid #db5e5e;")
         self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.formLayout_2.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.line_2)
@@ -171,13 +175,22 @@ class LoginForm(QtWidgets.QWidget):
         self.pushButton.setSizePolicy(sizePolicy)
         self.pushButton.setMinimumSize(QtCore.QSize(0, 60))
         self.pushButton.setAutoFillBackground(False)
-        self.pushButton.setStyleSheet("color: rgb(231, 231, 231);\n"
-                                      "font: 17pt \"Verdana\";\n"
-                                      "border: 2px solid orange;\n"
-                                      "padding: 5px;\n"
-                                      "border-radius: 3px;\n"
-                                      "opacity: 200;\n"
-                                      "")
+        self.pushButton.setStyleSheet("""
+            QPushButton {
+                color: #db5e5e; /* Color de texto por defecto */
+                font: 17pt "Verdana";
+                border: 2px solid #db5e5e;
+                padding: 5px;
+                border-radius: 3px;
+                opacity: 200;
+            }
+            QPushButton:hover {
+                background-color: #db5e5e;
+                border-style: inset;
+                color: #fff; /* Cambia el color del texto en hover */
+            }
+        """)
+
         self.pushButton.setAutoDefault(True)
         self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
 
@@ -185,7 +198,7 @@ class LoginForm(QtWidgets.QWidget):
         self.pushButton_2.setMinimumSize(QtCore.QSize(0, 60))
         self.pushButton_2.setStyleSheet("color: rgb(231, 231, 231);\n"
                                         "font: 17pt \"Verdana\";\n"
-                                        "border: 2px solid orange;\n"
+                                        "border: 2px solid #db5e5e;\n"
                                         "padding: 5px;\n"
                                         "border-radius: 3px;\n"
                                         "opacity: 200;\n"
@@ -249,10 +262,10 @@ class LoginForm(QtWidgets.QWidget):
         self.pushButton_3.setText(_translate("Form", "X"))
         self.label_2.setText(_translate(
             "Form",
-            "<html><head/><body><p><img src=\":/icons/icons/user_32x32.png\"/></p></body></html>"))
+            "<html><head/><body><p><img src=\"icons/user.png\"/></p></body></html>"))
         self.label_3.setText(_translate(
             "Form",
-            "<html><head/><body><p><img src=\":/icons/icons/lock_or_32x32.png\"/></p></body></html>"))
+            "<html><head/><body><p><img src=\"icons/locks.png\"/></p></body></html>"))
         self.pushButton.setText(_translate("Form", "Entrar"))
         self.lineEdit.setPlaceholderText(_translate("Form", "Usuario"))
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Contraseña"))
