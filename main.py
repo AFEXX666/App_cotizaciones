@@ -1,26 +1,53 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel
 import mysql.connector
 import icons_rc
-from db_consulta import get_database_connection 
-
+from db_consulta import get_database_connection
 
 class MainSlide(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.piezas = [("motor", 2000), ("llantas", 1000)]
+        self.row = []
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = "SELECT * FROM cliente;"
+        cursor.execute(sql)
+        self.row = cursor.fetchone()
+        con.close()
         self.mains()
 
     def mains(self):
         desktop = QtWidgets.QApplication.desktop()
         screen_geometry = desktop.screenGeometry()
+
+        # Main window setup
+        self.setStyleSheet(".QWidget{background-color: rgb(20, 20, 40);}")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        self.setStyleSheet(
-            """
+        self.setGeometry(screen_geometry)
+        self.setWindowTitle("Your Window Title")  # Set your window title here
+        self.initUI()
+
+    def initUI(self):
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # Header setup
+        header = QtWidgets.QWidget()
+        header.setStyleSheet("background-color: rgba(0, 0, 0, 0.2);")
+
+        header_layout = QtWidgets.QHBoxLayout(header)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+
+        company_label = QtWidgets.QLabel("Ingeniería Integral y Servicios", alignment=QtCore.Qt.AlignHCenter)
+        company_label.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\";")
+
+        close_button = QtWidgets.QPushButton("X")
+        close_button.setStyleSheet("""
             QPushButton {
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
+                color: white; 
+                font: 13pt \"Verdana\";
             }
             QPushButton:hover {
                 background-color: #FF0000;
@@ -30,42 +57,23 @@ class MainSlide(QtWidgets.QWidget):
                 background-color: #FF0000;
                 border-style: inset;
             }
-            """
-        )
+        """)
+        close_button.setMinimumSize(QtCore.QSize(35, 25))
+        close_button.setMaximumSize(QtCore.QSize(35, 25))
+        close_button.clicked.connect(self.close)
 
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(company_label, alignment=QtCore.Qt.AlignHCenter)
+        header_layout.addWidget(close_button, alignment=QtCore.Qt.AlignRight)
 
-        self.widget = QtWidgets.QWidget(self)
-        self.widget.setStyleSheet(
-            ".QWidget{background-color: rgb(20, 20, 40);}")
+        layout.addWidget(header)
+        layout.addStretch(1)  # Add flexible space to push content downward
 
-        self.gridLayout = QtWidgets.QGridLayout(self.widget)
+        # Add your content widgets here (e.g., labels, buttons, etc.)
+        content_label = QtWidgets.QLabel("Your Content Goes Here", alignment=QtCore.Qt.AlignHCenter)
+        content_label.setStyleSheet("color: white; font: 14pt \"Verdana\";")
 
-        self.pushButton_3 = QtWidgets.QPushButton("X", self)
-        self.pushButton_3.setMinimumSize(QtCore.QSize(35, 25))
-        self.pushButton_3.setMaximumSize(QtCore.QSize(35, 25))
-        self.pushButton_3.setStyleSheet("color: white;\n"
-                                        "font: 13pt \"Verdana\";\n"
-                                        "border-radius: 1px;\n"
-                                        "opacity: 200;\n")
-        self.pushButton_3.clicked.connect(self.close)
-
-        self.gridLayout.addWidget(
-            self.pushButton_3, 0, 1, QtCore.Qt.AlignTop | QtCore.Qt.AlignRight)
-
-        self.verticalLayout.addWidget(self.widget)
-
-        self.setGeometry(screen_geometry)
-        con = get_database_connection()  # Llamar la función para obtener la conexión
-        cursor = con.cursor()  # Acceder al cursor de la conexión
-        sql = "SELECT * FROM cliente;"
-        cursor.execute(sql)
-        row = cursor.fetchone()
-        print(row)
-        con.close()  # Cerrar la conexión cuando hayas terminado
-
-
+        layout.addWidget(content_label, alignment=QtCore.Qt.AlignHCenter)
+        layout.addStretch(2)  # Add more space at the bottom
 
 if __name__ == "__main__":
     import sys
