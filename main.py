@@ -1,8 +1,10 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QDialog, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget
-
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem
+from PyQt5.QtCore import Qt
 import mysql.connector
 import icons_rc
+from PyQt5.QtGui import QPixmap
+import sys
 from db_consulta import get_database_connection
 
 class ExitDialog(QDialog):
@@ -31,11 +33,93 @@ class ExitDialog(QDialog):
 class HomePage(QWidget):
     def __init__(self):
         super().__init__()
+        self.initUI()
+
+    def initUI(self):
         self.layout = QVBoxLayout()
-        self.label = QLabel("Página de Inicio", alignment=QtCore.Qt.AlignHCenter)
-        self.layout.addWidget(self.label)
+
+        # Barra de búsqueda
+        self.search_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_button = QPushButton("Search")
+
+        self.search_input.setFixedWidth(250)
+        self.search_input.setFixedHeight(50)
+        self.search_button.setFixedWidth(100)
+        self.search_button.setFixedHeight(50)
+        self.search_input.setStyleSheet("QLineEdit { color: #db5e5e; font: 10pt \"Verdana\"; border: 2px solid #db5e5e; border-bottom-color: #db5e5e; border-radius: 10px; padding: 0 8px; background: rgb(231, 231, 231); selection-background-color: darkgray; }")
+
+        self.search_layout.addWidget(self.search_input)
+        self.search_layout.addWidget(self.search_button)
+        self.search_layout.setAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.layout.addLayout(self.search_layout)
+
+        # Crear un área de desplazamiento para las tarjetas
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setStyleSheet("QScrollArea { border: none; }")
+        self.layout.addWidget(scroll_area)
+
+        # Crear un widget contenedor para las tarjetas
+        self.cards_container = QWidget()
+        scroll_area.setWidget(self.cards_container)
+
+        # Usar un diseño de cuadrícula para organizar las tarjetas en filas y columnas
+        self.grid_layout = QGridLayout()
+        self.cards_container.setLayout(self.grid_layout)
+
+        # Crear tarjetas de ejemplo
+        self.cards = []
+        cars = [("uriel", "icons/search.png"), ("saenz", "icons/locks.png")]
+        d = 0
+        for i in cars:
+            card = self.create_card(d, i[0], i[1])  # Cambia el nombre y la imagen según tus necesidades
+            d += 1
+            self.cards.append(card)
+
         self.setLayout(self.layout)
-        
+
+        # Conecta el evento de texto cambiado al método de filtrado
+        self.search_input.textChanged.connect(self.filter_cards)
+
+    def create_card(self, index, name, image_path):
+        # Crear etiqueta para la imagen
+        image_label = QLabel()
+        pixmap = QPixmap(image_path)
+        pixmap = pixmap.scaledToWidth(100)  # Cambiar el ancho de la imagen
+        image_label.setPixmap(pixmap)
+
+        # Crear etiqueta para el nombre
+        name_label = QLabel(name)
+
+        # Crear un diseño vertical para la tarjeta (imagen arriba, nombre abajo)
+        card_layout = QVBoxLayout()
+        card_layout.addWidget(image_label, alignment=Qt.AlignCenter)
+        card_layout.addWidget(name_label, alignment=Qt.AlignCenter)
+
+        # Agregar la tarjeta al diseño de la cuadrícula
+        row = index // 5
+        col = index % 5
+        self.grid_layout.addLayout(card_layout, row, col)
+
+        return name_label
+
+    def filter_cards(self):
+        search_text = self.search_input.text().strip().lower()
+        for card in self.cards:
+            card_text = card.text().lower()
+            card_widget = card.parentWidget()
+            if search_text in card_text:
+                card_widget.setVisible(True)
+            else:
+                card_widget.setVisible(False)
+        if not search_text:
+            for card in self.cards:
+                card.parentWidget().setVisible(True)
+
+
 
 class CotizacionesPage(QWidget):
     def __init__(self):
@@ -70,7 +154,6 @@ class MainSlide(QtWidgets.QWidget):
         self.screen_geometry = desktop.screenGeometry()
 
         # Main window setup
-        self.setStyleSheet(".QWidget{background-color: rgb(20, 20, 40);}")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setGeometry(self.screen_geometry)
 
@@ -101,16 +184,10 @@ class MainSlide(QtWidgets.QWidget):
                     padding: 6px;
                     color: white; 
                     font: 13pt "Verdana";
-                }
-                QPushButton:hover {
-                    background-color: #FF0000;
-                    border-style: inset;
-                }
-                QPushButton:pressed {
-                    background-color: #FF0000;
-                    border-style: inset;
+                    
                 }
             """)
+            redirect_button.setCursor(Qt.PointingHandCursor)
             redirect_button.clicked.connect(lambda _, i=i: self.change_page(i))  # Conectar el clic del botón con el cambio de página
             redirect_layout.addWidget(redirect_button, alignment=QtCore.Qt.AlignRight)
 
