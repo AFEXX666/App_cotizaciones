@@ -21,7 +21,10 @@ class LoginForm(QtWidgets.QWidget):
             "password": "6244", 
             "slide_index": 1
             }
-        self.setup_ui()
+        self.main_slide = MainSlide()
+        self.main_slide.show()
+        self.close
+        #self.setup_ui()
 
     def setup_ui(self):
         """Setup the login form.
