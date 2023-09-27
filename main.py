@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem
 from PyQt5.QtCore import Qt
-import mysql.connector
 import requests
 from api import get_image_url
 import icons_rc
@@ -33,19 +32,17 @@ class ExitDialog(QDialog):
         
         layout.addLayout(button_layout)
 
-
-
 class HomePage(QWidget):
     def __init__(self):
         super().__init__()
-        self.cot = []
+        self.coti = []
         self.info = []
         con = get_database_connection()
         cursor = con.cursor()
         sql = "SELECT * FROM cotizaciones;"
         cursor.execute(sql)
-        self.cot = cursor.fetchall()
-        print(self.cot)
+        self.coti = cursor.fetchall()
+        print(self.coti)
         con.close()
         
         self.initUI()
@@ -86,13 +83,44 @@ class HomePage(QWidget):
 
         self.card_widgets = []
 
-        for index, data in enumerate(self.cot):
+        for index, data in enumerate(self.coti):
             card_info = self.create_card(index, data[1], "icons/coin.png")
             self.card_widgets.append(card_info)
             
             # Utiliza functools.partial para crear una función lambda con el valor correcto de index
             card_info["widget"].clicked.connect(partial(self.redirect_to_page, data[0]))
+        
+        if not self.card_widgets:
+            print("gooooool")
+            
+            # Crear un contenedor vertical para el mensaje
+            message_container = QVBoxLayout()
+            
+            # Crear un icono (ajusta la ruta del archivo a tu icono)
+            icon_label = QLabel()
+            pixmap = QPixmap("icons/coin.png")
+            icon_label.setPixmap(pixmap)
+            icon_label.setAlignment(Qt.AlignCenter)
+            
+            # Crear el mensaje de texto
+            self.message_label = QLabel("Aquí aparecerán las cotizaciones cuando las agregues.")
+            self.message_label.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; font-weight: 900;")
+            self.message_label.setAlignment(Qt.AlignCenter)
 
+            # Agregar el icono y el mensaje al contenedor vertical
+            message_container.addWidget(icon_label)
+            message_container.addWidget(self.message_label)
+
+            # Establecer la alineación del contenedor vertical en el centro
+            message_container.setAlignment(Qt.AlignCenter)
+            
+            # Crear un widget para el contenedor del mensaje
+            message_widget = QWidget()
+            message_widget.setLayout(message_container)
+
+            # Agregar el widget del mensaje al widget contenedor del QScrollArea
+            self.cards_container.setLayout(QVBoxLayout())  # Limpia cualquier contenido anterior
+            self.cards_container.layout().addWidget(message_widget)
 
         self.setLayout(self.layout)
         
@@ -148,15 +176,21 @@ class HomePage(QWidget):
         cursor = con.cursor()
         sql = f"SELECT * FROM cotizaciones WHERE idCot = {index};"
         cursor.execute(sql)
-        self.cot = cursor.fetchall()
-        print(self.cot)
-
-
+        self.coti = cursor.fetchall()
+        print(self.coti)
 
 class CotizacionesPage(QWidget):
     def __init__(self):
         super().__init__()
         self.cot = []
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = "SELECT * FROM cotizaciones;"
+        cursor.execute(sql)
+        self.cot = cursor.fetchall()
+        print(self.cot)
+        con.close()
+        self.formulario = None
         self.initUI()
 
     def initUI(self):
@@ -172,7 +206,7 @@ class CotizacionesPage(QWidget):
         )
         self.plus_button.setFixedSize(50, 50)
         self.plus_button.setCursor(Qt.PointingHandCursor)
-        self.plus_button.clicked.connect(self.show_popup)
+        self.plus_button.clicked.connect(self.show_formulario)
 
         # Espaciador flexible para empujar los elementos a la derecha
         spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -276,12 +310,10 @@ class CotizacionesPage(QWidget):
         self.cot = cursor.fetchall()
         print(self.cot)
 
-    def show_popup(self):
-        self.hide() 
-        form_page = Formulario()
-        form_page.show()
-
-
+    def show_formulario(self):
+        if self.formulario is None:
+            self.formulario = FormularioCot(self)  # Crear una instancia del formulario si aún no existe
+        self.formulario.show()  # Mostrar el formulari
 
 class PreciosPage(QWidget):
     def __init__(self):
@@ -370,24 +402,43 @@ class PreciosPage(QWidget):
                 image_data = response.content
                 pixmap = QPixmap()
                 pixmap.loadFromData(image_data)
-                # Establece el tamaño de la imagen de acuerdo con la resolución estática
-                pixmap = pixmap.scaledToWidth(300)  # Cambia el tamaño a 300 píxeles de ancho
+                pixmap = pixmap.scaledToWidth(300)
                 image_label.setPixmap(pixmap)
             else:
-                # Manejar caso en el que la descarga de la imagen falla
                 image_label.setText("Imagen no disponible")
         except Exception as e:
-            # Manejar errores de conexión o descarga
             image_label.setText("Error al cargar la imagen")
 
         name_label = QLabel(name)
 
+        # Crear botones de borrar, ver y editar
+        delete_button = QPushButton("Borrar")
+        view_button = QPushButton("Ver")
+        edit_button = QPushButton("Editar")
+
+        # Establecer tamaños fijos para los botones
+        delete_button.setFixedWidth(80)
+        view_button.setFixedWidth(80)
+        edit_button.setFixedWidth(80)
+
+        # Conecta los botones a las funciones correspondientes
+        delete_button.clicked.connect(lambda: self.delete_card(index))
+        view_button.clicked.connect(lambda: self.redirect_to_page(index))
+        edit_button.clicked.connect(lambda: self.edit_card(index))
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(delete_button)
+        button_layout.addWidget(view_button)
+        button_layout.addWidget(edit_button)
+        button_layout.setAlignment(Qt.AlignCenter)
+
         card_layout = QVBoxLayout()
         card_layout.addWidget(image_label, alignment=Qt.AlignCenter)
         card_layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        card_layout.addLayout(button_layout)
 
         card_widget = QPushButton()
-        card_widget.setFixedSize(320, 350)  # Aumenta la altura para acomodar la imagen
+        card_widget.setFixedSize(320, 350)
         card_widget.setStyleSheet(
             "QPushButton {"
             "    background-color: white;"
@@ -427,6 +478,24 @@ class PreciosPage(QWidget):
         cursor.execute(sql)
         self.cot = cursor.fetchall()
         print(self.cot)
+    
+    def delete_card(self, index):
+        print(f"Tarjeta {str(index)} fue clicada. Redirigir a la página correspondiente.")
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = f"SELECT * FROM precios WHERE idPrecio = {index};"
+        cursor.execute(sql)
+        self.cot = cursor.fetchall()
+        print(self.cot)
+    
+    def edit_card(self, index):
+        print(f"Tarjeta {str(index)} fue clicada. Redirigir a la página correspondiente.")
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = f"SELECT * FROM precios WHERE idPrecio = {index};"
+        cursor.execute(sql)
+        self.cot = cursor.fetchall()
+        print(self.cot)
 
     def show_formulario(self):
         if self.formulario is None:
@@ -454,8 +523,6 @@ class PreciosPage(QWidget):
             card_info = self.create_card(index, data[1], data[3])
             self.card_widgets.append(card_info)
             card_info["widget"].clicked.connect(partial(self.redirect_to_page, data[0]))
-
-
 
 class Formulario(QWidget):
     def __init__(self, precios_page):
@@ -675,8 +742,238 @@ class Formulario(QWidget):
         else:
             self.error_label.setText("Llena todos los campos")
 
+    def retranslateUi(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.setWindowTitle(_translate("Form", "Form"))
+        self.pushButton_3.setText(_translate("Form", "X"))
+        self.label_2.setText(_translate(
+            "Form",
+            "<html><head/><body><p><img src=\"icons/cot.png\"/></p></body></html>"))
+        self.label_3.setText(_translate(
+            "Form",
+            "<html><head/><body><p><img src=\"icons/dllar.png\"/></p></body></html>"))
+        self.pushButton.setText(_translate("Form", "Agregar"))
+        self.lineEdit.setPlaceholderText(_translate("Form", "Nombre"))
+        self.lineEdit_2.setPlaceholderText(_translate("Form", "Precio"))
+        #self.pushButton_2.setText(_translate("Form", "Register"))
+
+class FormularioCot(QWidget):
+    def __init__(self, precios_page):
+        super().__init__()
+        self.precios_page = precios_page
+        self.initUI()
+
+    def initUI(self):
+        """Setup the login form.
+        """
+        self.resize(480, 340)
+        # remove the title bar
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+
+        self.setStyleSheet(
+            """
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                padding: 6px;
+                color: #db5e5e;
+            }
+            QPushButton:hover {
+                background-color: #db5e5e;
+                border-style: inset;
+                color: #fff;
+            }
+            QPushButton:pressed {
+                background-color: #db5e5e;
+                border-style: inset;
+            }
+            """
+        )
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+
+        self.widget = QtWidgets.QWidget(self)
+        self.widget.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.widget.setStyleSheet(".QWidget{background-color: #fff;}")
+
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout_2.setContentsMargins(9, 0, 0, 0)
+
+        self.pushButton_3 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_3.setMinimumSize(QtCore.QSize(45, 35))
+        self.pushButton_3.setMaximumSize(QtCore.QSize(45, 35))
+        self.pushButton_3.setStyleSheet("""
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                padding: 6px;
+                color: #000000; /* Color de texto por defecto */
+                font: 13pt "Verdana";
+                border-radius: 1px;
+                opacity: 200;
+            }
+            QPushButton:hover {
+                background-color: #FF0000;
+                border-style: inset;
+                color: #FFFFFF; /* Cambia el color del texto en hover */
+            }
+            QPushButton:pressed {
+                background-color: #FF0000;
+                border-style: inset;
+            }
+        """)
+
+        self.pushButton_3.clicked.connect(self.close)
+
+        self.verticalLayout_2.addWidget(self.pushButton_3, 0, QtCore.Qt.AlignRight)
+
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setContentsMargins(-1, 15, -1, -1)
+        #FUCKIN LOVE 
+        spacer_top = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacer_top)
+
+        self.formLayout_2 = QtWidgets.QFormLayout()
+        self.formLayout_2.setContentsMargins(50, 30, 59, -1)
+
+        self.label_2 = QtWidgets.QLabel(self.widget)
+        self.label_2.setStyleSheet("color: #db5e5e;\n"
+                                   "font: 15pt \"Verdana\";")
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_2)
+
+        self.lineEdit = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit.setMinimumSize(QtCore.QSize(0, 40))
+        self.lineEdit.setStyleSheet("QLineEdit {\n"
+                                    "color: #db5e5e;\n"
+                                    "font: 15pt \"Verdana\";\n"
+                                    "border: None;\n"
+                                    "border-bottom-color: #db5e5e;\n"
+                                    "border-radius: 10px;\n"
+                                    "padding: 0 8px;\n"
+                                    "background: #fff;\n"
+                                    "selection-background-color: darkgray;\n"
+                                    "}")
+        self.lineEdit.setFocus(True)
+        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
+
+        self.label_3 = QtWidgets.QLabel(self.widget)
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_3)
+
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_2.setMinimumSize(QtCore.QSize(0, 40))
+        self.lineEdit_2.setStyleSheet("QLineEdit {\n"
+                                      "color: #db5e5e;\n"
+                                      "font: 15pt \"Verdana\";\n"
+                                      "border: None;\n"
+                                      "border-bottom-color: #db5e5e;\n"
+                                      "border-radius: 10px;\n"
+                                      "padding: 0 8px;\n"
+                                      "background: #fff;\n"
+                                      "selection-background-color: darkgray;\n"
+                                      "}")
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+        
+
+        self.line = QtWidgets.QFrame(self.widget)
+        self.line.setStyleSheet("border: 2px solid #db5e5e;")
+        self.line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.formLayout_2.setWidget(1, QtWidgets.QFormLayout.SpanningRole, self.line)
+
+        self.line_2 = QtWidgets.QFrame(self.widget)
+        self.line_2.setStyleSheet("border: 2px solid #db5e5e;")
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.formLayout_2.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.line_2)
+
+        self.pushButton = QtWidgets.QPushButton(self.widget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pushButton.sizePolicy().hasHeightForWidth())
+
+        self.pushButton.setSizePolicy(sizePolicy)
+        self.pushButton.setMinimumSize(QtCore.QSize(0, 60))
+        self.pushButton.setAutoFillBackground(False)
+        self.pushButton.setStyleSheet("""
+            QPushButton {
+                color: #db5e5e; /* Color de texto por defecto */
+                font: 17pt "Verdana";
+                border: 2px solid #db5e5e;
+                padding: 5px;
+                border-radius: 3px;
+                opacity: 200;
+            }
+            QPushButton:hover {
+                background-color: #db5e5e;
+                border-style: inset;
+                color: #fff; /* Cambia el color del texto en hover */
+            }
+        """)
+
+        self.pushButton.setAutoDefault(True)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
+
+        """self.pushButton_2 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_2.setMinimumSize(QtCore.QSize(0, 60))
+        self.pushButton_2.setStyleSheet("color: rgb(231, 231, 231);\n"
+                                        "font: 17pt \"Verdana\";\n"
+                                        "border: 2px solid #db5e5e;\n"
+                                        "padding: 5px;\n"
+                                        "border-radius: 3px;\n"
+                                        "opacity: 200;\n"
+                                        "")
+        self.pushButton_2.setDefault(False)
+        self.pushButton_2.setFlat(False)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.pushButton_2)
+        """
+
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout_2.setItem(7, QtWidgets.QFormLayout.SpanningRole, spacerItem)
+        self.verticalLayout_3.addLayout(self.formLayout_2)
+
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_3.addItem(spacerItem1)
+        self.verticalLayout_2.addLayout(self.verticalLayout_3)
+
+        self.horizontalLayout_3.addWidget(self.widget)
+        self.horizontalLayout_3.setStretch(0, 1)
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
+        spacer_bottom = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacer_bottom)
+
+        #Error de contraseña y/o incorrectas
+        self.error_label = QtWidgets.QLabel(self.widget)
+        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\";")
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.SpanningRole, self.error_label)
 
 
+        self.retranslateUi()
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+        self.pushButton.clicked.connect(self.added)
+
+    def added(self):
+        con = get_database_connection()
+        nombre = self.lineEdit.text()
+        precio = self.lineEdit_2.text()
+        link = get_image_url(nombre)
+        read = nombre != '' and precio != '' and link != ''
+
+        if read:
+            cursor = con.cursor()
+            sql = "INSERT INTO precios (nombre, precio, link) VALUES (%s, %s, %s)"
+            data = (nombre, precio, link,)
+            cursor.execute(sql, data)
+            con.commit()
+            con.close()
+            self.precios_page.update_elements()  # Utiliza la instancia almacenada para actualizar la página
+            self.close()
+        else:
+            self.error_label.setText("Llena todos los campos")
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
@@ -693,15 +990,13 @@ class Formulario(QWidget):
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Precio"))
         #self.pushButton_2.setText(_translate("Form", "Register"))
 
-
-
 class MainSlide(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.clientes = []
         con = get_database_connection()
         cursor = con.cursor()
-        sql = "SELECT * FROM cliente;"
+        sql = "SELECT * FROM cotizaciones;"
         cursor.execute(sql)
         self.clientes = cursor.fetchone()
         con.close()
@@ -731,7 +1026,6 @@ class MainSlide(QtWidgets.QWidget):
         redirect_layout.setContentsMargins(0, 0, 0, 0)
         redirect = ["Inicio", "Cotizaciones", "Precios"]
         
-        # Lista de botones de redirección
         self.redirect_buttons = []
 
         for i in range(3):
@@ -794,7 +1088,6 @@ class MainSlide(QtWidgets.QWidget):
 
         layout.addLayout(body_layout)
 
-        # Establecer el estilo inicial de los botones
         self.update_redirect_buttons(0)
 
     def show_exit_dialog(self):
@@ -828,9 +1121,6 @@ class MainSlide(QtWidgets.QWidget):
                         font: 13pt "Verdana";
                     }
                 """)
-
-
-
 
 
 if __name__ == "__main__":
