@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
+import PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem, QStyledItemDelegate, QStyle
 from PyQt5.QtCore import Qt, QSize  
 import requests
@@ -10,6 +11,7 @@ from functools import partial
 from db_consulta import get_database_connection
 import datetime
 import locale
+import random
 
 
 class ExitDialog(QDialog):
@@ -42,13 +44,24 @@ class HomePage(QWidget):
         self.info = []
         con = get_database_connection()
         cursor = con.cursor()
-        sql = "SELECT * FROM cotizaciones;"
+        sql = "SELECT idCot, token, SUM(precio_final) as precio_total, nombre FROM cotizaciones GROUP BY token;"
         cursor.execute(sql)
         self.coti = cursor.fetchall()
         print(self.coti)
         con.close()
         
         self.initUI()
+
+    def update_data(self):
+        print("Actualizando datos en HomePage")
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = "SELECT idCot, token, SUM(precio_final) as precio_total, nombre FROM cotizaciones GROUP BY token;"
+        cursor.execute(sql)
+        self.coti = cursor.fetchall()
+        con.close()
+        print("Datos actualizados en HomePage:", self.coti)
+        self.recreate_cards()
 
     def initUI(self):
         self.layout = QVBoxLayout()
@@ -87,11 +100,9 @@ class HomePage(QWidget):
         self.card_widgets = []
 
         for index, data in enumerate(self.coti):
-            card_info = self.create_card(index, data[1], "icons/coin.png")
+            card_info = self.create_card(index, data[3], "icons/coin.png", data[2], data[1])
             self.card_widgets.append(card_info)
             
-            # Utiliza functools.partial para crear una función lambda con el valor correcto de index
-            card_info["widget"].clicked.connect(partial(self.redirect_to_page, data[0]))
         
         if not self.card_widgets:
             print("gooooool")
@@ -129,17 +140,60 @@ class HomePage(QWidget):
         
         self.search_input.textChanged.connect(self.filter_cards)
 
-    def create_card(self, index, name, image_path):
+    def create_card(self, index, name, image_path, price, token):
+        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
         image_label = QLabel()
         pixmap = QPixmap(image_path)
         pixmap = pixmap.scaledToWidth(300)
         image_label.setPixmap(pixmap)
 
         name_label = QLabel(name)
+        formatted_price = locale.format_string("%d", price, grouping=True)
+        price_label = QLabel(f"${formatted_price}")  # Muestra el precio formateado
+        price_label.setStyleSheet("color: #db5e5e; font: 8pt \"Verdana\";font-weight: 900;")
+
+        # Crear botones de borrar, ver y editar con iconos
+        ver_icon = QIcon("icons/edit2.png")
+
+        # Obtener imágenes de los iconos y redimensionarlas al tamaño deseado
+        ver_image = ver_icon.pixmap(80, 80)
+
+        ver_button = QPushButton()
+        ver_button.setIcon(QIcon(ver_image))
+
+        # Establecer tamaños fijos para los botones
+        button_size = QSize(60, 60)
+        button_style = """
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                color: #db5e5e;
+            }
+            QPushButton:hover {
+                background-color: #E6E6E6;
+                border-style: inset;
+                color: #fff;
+            }
+        """
+        ver_button.setStyleSheet(button_style)
+
+        ver_button.setFixedSize(button_size)
+
+        ver_button.setCursor(Qt.PointingHandCursor)
+
+        # Conectar los botones a las funciones correspondientes
+        ver_button.clicked.connect(lambda: self.redirect_to_page(token))
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(ver_button)
+        button_layout.setAlignment(Qt.AlignCenter)
 
         card_layout = QVBoxLayout()
         card_layout.addWidget(image_label, alignment=Qt.AlignCenter)
         card_layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        card_layout.addWidget(price_label, alignment=Qt.AlignCenter)  # Agregar el precio
+        card_layout.addLayout(button_layout)
+
 
         card_widget = QPushButton()
         card_widget.setFixedSize(320, 300)
@@ -149,7 +203,6 @@ class HomePage(QWidget):
             "    border-radius: 10px;"
             "}"
         )
-        card_widget.setCursor(Qt.PointingHandCursor)
         card_widget.setLayout(card_layout)
 
         row = index // 5
@@ -172,14 +225,23 @@ class HomePage(QWidget):
                 card_widget = card_info["widget"]
                 card_widget.setVisible(True)
 
-    def redirect_to_page(self, index):
-        print(f"Tarjeta {str(index)} fue clicada. Redirigir a la página correspondiente.")
-        con = get_database_connection()
-        cursor = con.cursor()
-        sql = f"SELECT * FROM cotizaciones WHERE idCot = {index};"
-        cursor.execute(sql)
-        self.coti = cursor.fetchall()
-        print(self.coti)
+    def redirect_to_page(self, token):  # Reemplaza esto con la función para obtener los datos de la carta
+        card_info_dialog = CardInfoDialog(token)
+        card_info_dialog.exec_()  # Muestra la ventana emergente con la información de la carta
+
+
+    def recreate_cards(self):
+        # Elimina las cartas existentes
+        for i in reversed(range(self.grid_layout.count())):
+            widget = self.grid_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Crea las cartas nuevamente con los datos actualizados
+        for index, data in enumerate(self.coti):
+            card_info = self.create_card(index, data[3], "icons/coin.png", data[2], data[1])
+            self.card_widgets.append(card_info)
+            card_info["widget"].clicked.connect(partial(self.redirect_to_page, data[0]))
 
 class CotizacionesPage(QWidget):
     def __init__(self):
@@ -187,7 +249,7 @@ class CotizacionesPage(QWidget):
         self.cot = []
         con = get_database_connection()
         cursor = con.cursor()
-        sql = "SELECT * FROM cotizaciones;"
+        sql = "SELECT idCot, token, SUM(precio_final) as precio_total, nombre FROM cotizaciones GROUP BY token;"  # Reemplaza 'token' con el nombre real de tu columna de token
         cursor.execute(sql)
         self.cot = cursor.fetchall()
         print(self.cot)
@@ -249,7 +311,7 @@ class CotizacionesPage(QWidget):
         self.card_widgets = []
 
         for index, data in enumerate(self.cot):
-            card_info = self.create_card(index, data[1], "icons/coin.png")
+            card_info = self.create_card(index, data[3], "icons/coin.png", data[2], data[1])
             self.card_widgets.append(card_info)
 
 
@@ -257,17 +319,70 @@ class CotizacionesPage(QWidget):
 
         self.search_input.textChanged.connect(self.filter_cards)
 
-    def create_card(self, index, name, image_path):
+    def create_card(self, index, name, image_path, price, id):
+        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
         image_label = QLabel()
         pixmap = QPixmap(image_path)
         pixmap = pixmap.scaledToWidth(300)
         image_label.setPixmap(pixmap)
 
         name_label = QLabel(name)
+        name_label.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; font-weight: 900;")
+        formatted_price = locale.format_string("%d", price, grouping=True)
+        price_label = QLabel(f"${formatted_price}")  # Muestra el precio formateado
+        price_label.setStyleSheet("color: #db5e5e; font: 8pt \"Verdana\";font-weight: 900;")
+
+        # Crear botones de borrar, ver y editar con iconos
+        delete_icon = QIcon("icons/delete.png")
+        edit_icon = QIcon("icons/ver.png")
+
+        # Obtener imágenes de los iconos y redimensionarlas al tamaño deseado
+        delete_image = delete_icon.pixmap(80, 80)
+        edit_image = edit_icon.pixmap(60, 60)
+
+        delete_button = QPushButton()
+        delete_button.setIcon(QIcon(delete_image))
+        edit_button = QPushButton()
+        edit_button.setIcon(QIcon(edit_image))
+
+        # Establecer tamaños fijos para los botones
+        button_size = QSize(60, 60)
+        button_style = """
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                color: #db5e5e;
+            }
+            QPushButton:hover {
+                background-color: #E6E6E6;
+                border-style: inset;
+                color: #fff;
+            }
+        """
+        delete_button.setStyleSheet(button_style)
+        edit_button.setStyleSheet(button_style)
+
+        delete_button.setFixedSize(button_size)
+        edit_button.setFixedSize(button_size)
+
+        delete_button.setCursor(Qt.PointingHandCursor)
+        edit_button.setCursor(Qt.PointingHandCursor)
+
+        # Conectar los botones a las funciones correspondientes
+        delete_button.clicked.connect(lambda: self.delete_card(id))
+        edit_button.clicked.connect(lambda: self.show_formulario(id))
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(delete_button)
+        button_layout.addWidget(edit_button)
+        button_layout.setAlignment(Qt.AlignCenter)
 
         card_layout = QVBoxLayout()
         card_layout.addWidget(image_label, alignment=Qt.AlignCenter)
         card_layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        card_layout.addWidget(price_label, alignment=Qt.AlignCenter)  # Agregar el precio
+        card_layout.addLayout(button_layout)
+
 
         card_widget = QPushButton()
         card_widget.setFixedSize(320, 300)
@@ -309,16 +424,38 @@ class CotizacionesPage(QWidget):
         self.cot = cursor.fetchall()
         print(self.cot)
 
+    def delete_card(self, index):
+        print(f"Eliminar tarjeta {str(index)}")
+        con = get_database_connection()
+        cursor = con.cursor()
+
+        # Utiliza una consulta DELETE para eliminar el registro específico en función del índice
+        sql = f"DELETE FROM cotizaciones WHERE token = {index};"
+        
+        try:
+            cursor.execute(sql)
+            con.commit()
+            print(f"Tarjeta {str(index)} eliminada con éxito.")
+        except Exception as e:
+            con.rollback()
+            print(f"Error al eliminar tarjeta {str(index)}:", str(e))
+        finally:
+            con.close()
+
+        self.update_elements()
+
+
     def show_formulario(self):
         if self.formulario is None:
-            self.formulario = FormularioCot(self)  # Crear una instancia del formulario si aún no existe
-        self.formulario.show()  # Mostrar el formulari
+            self.formulario = FormularioCot(self)
+        self.formulario.show()
+        self.formulario.update_data()  # Mostrar el formulari
 
     def update_elements(self):
         # Lógica para actualizar la lista de elementos (self.cot) aquí
         con = get_database_connection()
         cursor = con.cursor()
-        sql = "SELECT * FROM precios;"
+        sql = "SELECT idCot, token, SUM(precio_final) as precio_total, nombre FROM cotizaciones GROUP BY token;"
         cursor.execute(sql)
         self.cot = cursor.fetchall()
         con.close()
@@ -332,7 +469,7 @@ class CotizacionesPage(QWidget):
         # Crea los nuevos widgets de tarjetas con la lista actualizada
         self.card_widgets = []
         for index, data in enumerate(self.cot):
-            card_info = self.create_card(index, data[1], data[3], data[0], data[2])
+            card_info = self.create_card(index, data[3], "icons/coin.png", data[2], data[1])
             self.card_widgets.append(card_info)
 
         # Verifica si hay cartas presentes o no
@@ -576,7 +713,6 @@ class PreciosPage(QWidget):
 
         return {"widget": card_widget, "name": name, "image_url": image_url}
 
-
     def filter_cards(self):
         search_text = self.search_input.text().strip().lower()
         for card_info in self.card_widgets:
@@ -590,7 +726,6 @@ class PreciosPage(QWidget):
             for card_info in self.card_widgets:
                 card_widget = card_info["widget"]
                 card_widget.setVisible(True)
-
     
     def delete_card(self, index):
         print(f"Eliminar tarjeta {str(index)}")
@@ -973,7 +1108,7 @@ class FormularioCot(QtWidgets.QWidget):
     def __init__(self, cotizaciones_page):
         super().__init__()
         self.cotizaciones_page = cotizaciones_page
-        self.cot = self.fetch_precios_from_database()
+        self.cot = []
         self.initUI()
 
     def fetch_precios_from_database(self):
@@ -985,8 +1120,23 @@ class FormularioCot(QtWidgets.QWidget):
         con.close()
         return cot
 
+    def update_data(self):
+        # Actualiza los datos desde la base de datos
+        self.cot = self.fetch_precios_from_database()
+                # Limpia y actualiza la vista de la lista
+        model = QtGui.QStandardItemModel()
+        for option in self.cot:
+            item = QtGui.QStandardItem(f"{option[1]} ${str(option[2])}")
+            item.setCheckable(True)
+            model.appendRow(item)
+        self.list_view.setModel(model)
+
+        # Actualiza cualquier otro elemento que necesite cambios
+        self.update_total_price()
+        self.list_view.selectionModel().selectionChanged.connect(self.update_total_price)
 
     def initUI(self):
+        self.cot = self.fetch_precios_from_database()
         self.resize(580, 640)
         self.setWindowTitle("Form")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
@@ -1190,6 +1340,7 @@ class FormularioCot(QtWidgets.QWidget):
         cliente = self.lineEdit_2.text()
         read = nombre != '' and cliente != ''
         fecha_actual = datetime.date.today()
+        token = ''.join(random.choice('0123456789') for _ in range(10))
         # Obtener los elementos seleccionados en la lista
         selected_indexes = self.list_view.selectedIndexes()
         selected_cot = [self.cot[index.row()] for index in selected_indexes]
@@ -1203,12 +1354,12 @@ class FormularioCot(QtWidgets.QWidget):
         if read:
             for cot in selected_cot:
                 cursor = con.cursor()
-                sql = "INSERT INTO cotizaciones (nombre, cliente, fecha, pieza, precio_final) VALUES (%s, %s, %s, %s, %s)"
-                data = (nombre, cliente, fecha_actual, cot[1], cot[2])
+                sql = "INSERT INTO cotizaciones (nombre, cliente, fecha, pieza, precio_final, token) VALUES (%s, %s, %s, %s, %s, %s)"
+                data = (nombre, cliente, fecha_actual, cot[1], cot[2], token)
                 cursor.execute(sql, data)
                 con.commit()
             con.close()
-            #self.cotizaciones_page.update_elements()
+            self.cotizaciones_page.update_elements()
             self.close()
         else:
             self.error_label.setText("Llena todos los campos")
@@ -1221,7 +1372,6 @@ class FormularioCot(QtWidgets.QWidget):
             total_price += self.cot[index.row()][2]
         self.price_label.setText(f"Precio Total: ${total_price:.2f}")
 
-
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
@@ -1232,6 +1382,95 @@ class FormularioCot(QtWidgets.QWidget):
         self.lineEdit.setPlaceholderText(_translate("Form", "Trabajo"))
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Nombre del Cliente"))
 
+class CardInfoDialog(QtWidgets.QDialog):
+    def __init__(self, token):
+        super().__init__()
+        self.token = token
+        self.cot = []
+        self.initUI()
+    
+    def cotizaciones(self):
+        con = get_database_connection()
+        cursor = con.cursor()
+        sql = f"SELECT * FROM cotizaciones WHERE token = {self.token};"
+        cursor.execute(sql)
+        cot = cursor.fetchall()
+        con.close()
+        return cot
+
+    def initUI(self):
+        self.cot = self.cotizaciones()
+        print(self.cot)
+        self.setFixedSize(900, 700)
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        header = QtWidgets.QWidget()
+        header.setStyleSheet("background-color: #db5e5e;")
+        header.setFixedSize(900, 100)
+
+        header_layout = QtWidgets.QVBoxLayout(header)  # Cambia de QHBoxLayout a QVBoxLayout
+
+        company_label = QtWidgets.QLabel(self.cot[0][2])
+        company_label.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\"; font-weight: 900;")
+
+        subtitle_label = QtWidgets.QLabel(f"Cotizacion de {self.cot[0][1]}")
+        subtitle_label.setStyleSheet("color: rgb(231, 231, 231); font: 12pt \"Verdana\";")  # Establecer estilo
+
+        close_button = QtWidgets.QPushButton("X")
+        close_button.setStyleSheet("""
+            QPushButton {
+                border-style: outset;
+                border-radius: 0px;
+                padding: 6px;
+                color: white;
+                font: 13pt "Verdana";
+            }
+            QPushButton:hover {
+                background-color: #FF0000;
+                border-style: inset;
+            }
+            QPushButton:pressed {
+                background-color: #FF0000;
+                border-style: inset;
+            }
+        """)
+        close_button.setMinimumSize(QtCore.QSize(35, 25))
+        close_button.setMaximumSize(QtCore.QSize(35, 25))
+        close_button.clicked.connect(lambda: self.close())
+
+        header_layout.addWidget(close_button, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
+        header_layout.addWidget(company_label, alignment=QtCore.Qt.AlignCenter)  # Centra el título
+        header_layout.addWidget(subtitle_label, alignment=QtCore.Qt.AlignCenter)  # Centra el subtítulo
+        
+        layout.addWidget(header)
+        
+        body_layout = QtWidgets.QVBoxLayout()
+
+        # Aquí se crean las tres cajas de texto
+        label1 = QtWidgets.QLabel("Piezas")
+        label1.setStyleSheet("color: #db5e5e; font: 12pt \"Verdana\"; font-weight: 700;")
+
+        label2 = QtWidgets.QLabel("Fecha")
+        label2.setStyleSheet("color: #db5e5e; font: 12pt \"Verdana\"; font-weight: 700;")
+
+        #label3 = QtWidgets.QLabel("Título 3")
+        #label3.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700;")
+
+        # Agregar las cajas de texto al diseño del cuerpo
+        body_layout.addWidget(label1, alignment=QtCore.Qt.AlignLeft)
+        body_layout.addWidget(label2, alignment=QtCore.Qt.AlignLeft)
+        #body_layout.addWidget(label3, alignment=QtCore.Qt.AlignLeft)
+
+        layout.addLayout(body_layout)
+
+    def showEvent(self, event):
+        # Esta función se llama cuando la ventana se muestra
+        screen_geometry = QtWidgets.QDesktopWidget().screenGeometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+        self.move(x, y)
 
 class MainSlide(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
@@ -1339,6 +1578,9 @@ class MainSlide(QtWidgets.QWidget):
             self.close()
 
     def change_page(self, index):
+        if index == 0:  # Página de inicio
+            home_page = self.page_container.widget(index)  # Obtener la instancia de HomePage
+            home_page.update_data()  # Llamar a la función de actualización de datos
         self.page_container.setCurrentIndex(index)
         self.update_redirect_buttons(index)
 
