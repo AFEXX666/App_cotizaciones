@@ -6,12 +6,6 @@ import icons_rc  # pylint: disable=unused-import
 from customized import PasswordEdit
 from main import MainSlide
 
-
-
-
-# TODO: Improve readability
-
-
 class LoginForm(QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):

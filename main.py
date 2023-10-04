@@ -448,7 +448,8 @@ class CotizacionesPage(QWidget):
     def show_formulario(self):
         if self.formulario is None:
             self.formulario = FormularioCot(self)
-        self.formulario.show()
+        #self.formulario.show()
+        self.formulario.exec_()
         self.formulario.update_data()  # Mostrar el formulari
 
     def update_elements(self):
@@ -754,7 +755,7 @@ class PreciosPage(QWidget):
         if self.formulario:
             self.formulario.close()
         self.formulario = Formulario(self, index)
-        self.formulario.show()
+        self.formulario.exec_()
 
 
     def update_elements(self):
@@ -815,7 +816,7 @@ class PreciosPage(QWidget):
             self.cards_container.setLayout(QVBoxLayout())
             self.cards_container.layout().addWidget(message_widget)
 
-class Formulario(QWidget):
+class Formulario(QtWidgets.QDialog):
     def __init__(self, precios_page, index=''):
         super().__init__()
         self.precios_page = precios_page
@@ -832,6 +833,7 @@ class Formulario(QWidget):
 
         self.setStyleSheet(
             """
+            border: 2px solid #db5e5e; /* Borde */
             QPushButton {
                 border-style: outset;
                 border-radius: 0px;
@@ -867,6 +869,7 @@ class Formulario(QWidget):
         self.pushButton_3.setMaximumSize(QtCore.QSize(45, 35))
         self.pushButton_3.setStyleSheet("""
             QPushButton {
+                border: none;
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
@@ -903,7 +906,7 @@ class Formulario(QWidget):
 
         self.label_2 = QtWidgets.QLabel(self.widget)
         self.label_2.setStyleSheet("color: #db5e5e;\n"
-                                   "font: 15pt \"Verdana\";")
+                                   "font: 15pt \"Verdana\"; border: none;")
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_2)
 
         self.lineEdit = QtWidgets.QLineEdit(self.widget)
@@ -911,7 +914,7 @@ class Formulario(QWidget):
         self.lineEdit.setStyleSheet("QLineEdit {\n"
                                     "color: #db5e5e;\n"
                                     "font: 15pt \"Verdana\";\n"
-                                    "border: None;\n"
+                                    "border: none;\n"
                                     "border-bottom-color: #db5e5e;\n"
                                     "border-radius: 10px;\n"
                                     "padding: 0 8px;\n"
@@ -922,6 +925,7 @@ class Formulario(QWidget):
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
 
         self.label_3 = QtWidgets.QLabel(self.widget)
+        self.label_3.setStyleSheet("border: none;")
         self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_3)
 
         self.lineEdit_2 = QtWidgets.QLineEdit(self.widget)
@@ -1009,7 +1013,7 @@ class Formulario(QWidget):
 
         #Error de contraseña y/o incorrectas
         self.error_label = QtWidgets.QLabel(self.widget)
-        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\";")
+        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\"; border: none;")
         self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.SpanningRole, self.error_label)
         
         if self.index:
@@ -1102,9 +1106,9 @@ class CardItemDelegate(QStyledItemDelegate):
         painter.drawText(option.rect, Qt.AlignCenter, item_text)
 
     def sizeHint(self, option, index):
-        return QSize(100, 80)  # Set the size of the card items here
+        return QSize(25, 80)  # Set the size of the card items here
 
-class FormularioCot(QtWidgets.QWidget):
+class FormularioCot(QtWidgets.QDialog):
     def __init__(self, cotizaciones_page):
         super().__init__()
         self.cotizaciones_page = cotizaciones_page
@@ -1137,10 +1141,11 @@ class FormularioCot(QtWidgets.QWidget):
 
     def initUI(self):
         self.cot = self.fetch_precios_from_database()
-        self.resize(580, 640)
-        self.setWindowTitle("Form")
+        self.resize(580, 620)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setStyleSheet("""
+            border: 2px solid #db5e5e; /* Borde */
+            background: #fff;
             QPushButton {
                 border-style: outset;
                 border-radius: 0px;
@@ -1166,13 +1171,14 @@ class FormularioCot(QtWidgets.QWidget):
         self.widget.setStyleSheet(".QWidget{background-color: #fff;}")
 
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_2.setContentsMargins(9, 0, 0, 0)
+        self.verticalLayout_2.setContentsMargins(9, 2, 2, 2)
 
         self.pushButton_3 = QtWidgets.QPushButton(self.widget)
         self.pushButton_3.setMinimumSize(QtCore.QSize(45, 35))
         self.pushButton_3.setMaximumSize(QtCore.QSize(45, 35))
         self.pushButton_3.setStyleSheet("""
             QPushButton {
+                border: none;
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
@@ -1206,7 +1212,7 @@ class FormularioCot(QtWidgets.QWidget):
         self.formLayout_2.setContentsMargins(50, 30, 59, -1)
 
         self.label_2 = QtWidgets.QLabel(self.widget)
-        self.label_2.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"")
+        self.label_2.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; border: none;")
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_2)
 
         self.lineEdit = QtWidgets.QLineEdit(self.widget)
@@ -1215,7 +1221,7 @@ class FormularioCot(QtWidgets.QWidget):
             QLineEdit {
                 color: #db5e5e;
                 font: 15pt "Verdana";
-                border: None;
+                border: none;
                 border-bottom-color: #db5e5e;
                 border-radius: 10px;
                 padding: 0 8px;
@@ -1227,23 +1233,26 @@ class FormularioCot(QtWidgets.QWidget):
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
 
         self.list_view = QtWidgets.QListView(self.widget)
+        self.list_view.setStyleSheet("border: none")
         self.list_view.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         model = QtGui.QStandardItemModel()
         for option in self.cot:
-            item = QtGui.QStandardItem(f"{option[1]} ${str(option[2])}")
+            item = QtGui.QStandardItem(option[1].upper())
             item.setCheckable(True)
             model.appendRow(item)
         self.list_view.setModel(model)
         card_delegate = CardItemDelegate()
         self.list_view.setItemDelegate(card_delegate)
-        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.SpanningRole, self.list_view)
+        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.list_view)
         self.price_label = QtWidgets.QLabel(self.widget)
-        self.formLayout_2.setWidget(7, QtWidgets.QFormLayout.SpanningRole, self.price_label)
+        self.price_label.setAlignment(QtCore.Qt.AlignRight)
+        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.SpanningRole, self.price_label)
         self.update_total_price()  
         self.list_view.selectionModel().selectionChanged.connect(self.update_total_price)
 
 
         self.label_3 = QtWidgets.QLabel(self.widget)
+        self.label_3.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; border: none;")
         self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_3)
 
         self.lineEdit_2 = QtWidgets.QLineEdit(self.widget)
@@ -1262,6 +1271,26 @@ class FormularioCot(QtWidgets.QWidget):
         """)
         self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
 
+        self.label_4 = QtWidgets.QLabel(self.widget)
+        self.label_4.setStyleSheet("color: #db5e5e; font: 15pt \"Verdana\"; border: none;")
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.label_4)
+
+        self.lineEdit_empresa = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_empresa.setMinimumSize(QtCore.QSize(0, 40))
+        self.lineEdit_empresa.setStyleSheet("""
+            QLineEdit {
+                color: #db5e5e;
+                font: 15pt "Verdana";
+                border: none;
+                border-bottom-color: #db5e5e;
+                border-radius: 10px;
+                padding: 0 8px;
+                background: #fff;
+                selection-background-color: darkgray;
+            }
+        """)
+        self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.lineEdit_empresa)
+
         self.line = QtWidgets.QFrame(self.widget)
         self.line.setStyleSheet("border: 2px solid #db5e5e;")
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -1273,6 +1302,12 @@ class FormularioCot(QtWidgets.QWidget):
         self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.formLayout_2.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.line_2)
+
+        self.line_3 = QtWidgets.QFrame(self.widget)
+        self.line_3.setStyleSheet("border: 2px solid #db5e5e;")
+        self.line_3.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_3.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.formLayout_2.setWidget(7, QtWidgets.QFormLayout.SpanningRole, self.line_3)
 
         self.pushButton = QtWidgets.QPushButton(self.widget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -1300,10 +1335,10 @@ class FormularioCot(QtWidgets.QWidget):
         """)
 
         self.pushButton.setAutoDefault(True)
-        self.formLayout_2.setWidget(10, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
+        self.formLayout_2.setWidget(12, QtWidgets.QFormLayout.SpanningRole, self.pushButton)
 
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout_2.setItem(9, QtWidgets.QFormLayout.SpanningRole, spacerItem)
+        self.formLayout_2.setItem(11, QtWidgets.QFormLayout.SpanningRole, spacerItem)
         self.verticalLayout_3.addLayout(self.formLayout_2)
 
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -1319,8 +1354,8 @@ class FormularioCot(QtWidgets.QWidget):
         self.verticalLayout.addItem(spacer_bottom)
 
         self.error_label = QtWidgets.QLabel(self.widget)
-        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\"")
-        self.formLayout_2.setWidget(8, QtWidgets.QFormLayout.SpanningRole, self.error_label)
+        self.error_label.setStyleSheet("color: red; font: 12pt \"Verdana\"; border: none;")
+        self.formLayout_2.setWidget(9, QtWidgets.QFormLayout.SpanningRole, self.error_label)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -1338,6 +1373,8 @@ class FormularioCot(QtWidgets.QWidget):
         con = get_database_connection()
         nombre = self.lineEdit.text()
         cliente = self.lineEdit_2.text()
+        empresa = self.lineEdit_empresa.text()
+        print(empresa)
         read = nombre != '' and cliente != ''
         fecha_actual = datetime.date.today()
         token = ''.join(random.choice('0123456789') for _ in range(10))
@@ -1371,16 +1408,19 @@ class FormularioCot(QtWidgets.QWidget):
         for index in selected_indexes:
             total_price += self.cot[index.row()][2]
         self.price_label.setText(f"Precio Total: ${total_price:.2f}")
+        self.price_label.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; border: none;")
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
         self.pushButton_3.setText(_translate("Form", "X"))
-        self.label_2.setText(_translate("Form", "<html><head/><body><p><img src=\"icons/cot.png\"/></p></body></html>"))
-        self.label_3.setText(_translate("Form", "<html><head/><body><p><img src=\"icons/cot.png\"/></p></body></html>"))
+        self.label_2.setText(_translate("Form", "<html><head/><body><p><img src=\"icons/work.png\"/></p></body></html>"))
+        self.label_3.setText(_translate("Form", "<html><head/><body><p><img src=\"icons/user.png\"/></p></body></html>"))
+        self.label_4.setText(_translate("Form", "<html><head/><body><p><img src=\"icons/builds.png\"/></p></body></html>"))
         self.pushButton.setText(_translate("Form", "Agregar"))
         self.lineEdit.setPlaceholderText(_translate("Form", "Trabajo"))
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Nombre del Cliente"))
+        self.lineEdit_empresa.setPlaceholderText(_translate("Form", "Nombre de la Empresa"))
 
 class CardInfoDialog(QtWidgets.QDialog):
     def __init__(self, token):
@@ -1398,29 +1438,34 @@ class CardInfoDialog(QtWidgets.QDialog):
         con.close()
         return cot
 
+    
     def initUI(self):
         self.cot = self.cotizaciones()
         print(self.cot)
         self.setFixedSize(900, 700)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.setStyleSheet('''
+            border: 2px solid #db5e5e; /* Borde */
+        ''')
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         header = QtWidgets.QWidget()
         header.setStyleSheet("background-color: #db5e5e;")
-        header.setFixedSize(900, 100)
+        header.setFixedSize(900, 120)
 
         header_layout = QtWidgets.QVBoxLayout(header)  # Cambia de QHBoxLayout a QVBoxLayout
 
         company_label = QtWidgets.QLabel(self.cot[0][2])
         company_label.setStyleSheet("color: rgb(231, 231, 231); font: 15pt \"Verdana\"; font-weight: 900;")
 
-        subtitle_label = QtWidgets.QLabel(f"Cotizacion de {self.cot[0][1]}")
+        subtitle_label = QtWidgets.QLabel(f"Cotizacion para: {self.cot[0][1]}")
         subtitle_label.setStyleSheet("color: rgb(231, 231, 231); font: 12pt \"Verdana\";")  # Establecer estilo
 
         close_button = QtWidgets.QPushButton("X")
         close_button.setStyleSheet("""
             QPushButton {
+                border: none;
                 border-style: outset;
                 border-radius: 0px;
                 padding: 6px;
@@ -1441,27 +1486,59 @@ class CardInfoDialog(QtWidgets.QDialog):
         close_button.clicked.connect(lambda: self.close())
 
         header_layout.addWidget(close_button, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
-        header_layout.addWidget(company_label, alignment=QtCore.Qt.AlignCenter)  # Centra el título
-        header_layout.addWidget(subtitle_label, alignment=QtCore.Qt.AlignCenter)  # Centra el subtítulo
+        header_layout.addWidget(company_label, alignment=QtCore.Qt.AlignCenter)  
+        header_layout.addWidget(subtitle_label, alignment=QtCore.Qt.AlignCenter)  
         
         layout.addWidget(header)
         
         body_layout = QtWidgets.QVBoxLayout()
+        body_layout.setContentsMargins(15, 15, 15, 15)
 
         # Aquí se crean las tres cajas de texto
-        label1 = QtWidgets.QLabel("Piezas")
-        label1.setStyleSheet("color: #db5e5e; font: 12pt \"Verdana\"; font-weight: 700;")
+        # Crear etiquetas para mostrar información
+        info_labels = []  # Crear una lista para las etiquetas
+        info_labelsF = []  # Crear una lista para las etiquetas
 
-        label2 = QtWidgets.QLabel("Fecha")
-        label2.setStyleSheet("color: #db5e5e; font: 12pt \"Verdana\"; font-weight: 700;")
+        
 
-        #label3 = QtWidgets.QLabel("Título 3")
-        #label3.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700;")
+        for idx, cos in enumerate(self.cot):
+            print(cos[5])
+            label = QtWidgets.QLabel(f"{cos[6]}      ${cos[7]}")
+            label.setStyleSheet("font: 10pt \"Verdana\"; border: none; color: #db5e5e;")
+            label.setObjectName(f"label_{idx}")  # Establecer un nombre único para la etiqueta
+            info_labels.append(label)
 
-        # Agregar las cajas de texto al diseño del cuerpo
-        body_layout.addWidget(label1, alignment=QtCore.Qt.AlignLeft)
-        body_layout.addWidget(label2, alignment=QtCore.Qt.AlignLeft)
-        #body_layout.addWidget(label3, alignment=QtCore.Qt.AlignLeft)
+        for idx, cos in enumerate(self.cot):
+            idx = idx + 20
+            label2 = QtWidgets.QLabel(f"Fecha: {cos[4]}")
+            label2.setStyleSheet("font: 10pt \"Verdana\"; border: none;")
+            label2.setObjectName(f"label_{idx}")
+            info_labelsF.append(label2)  
+        
+
+        # Títulos
+        title_labels = []
+        titles = ["Piezas", "Fecha"]
+
+        for index, title in enumerate(titles):
+            label = QtWidgets.QLabel(title)
+            label.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700; border: none;")
+            title_labels.append(label)
+        
+
+        # Agregar las etiquetas de títulos y de información al diseño del cuerpo
+        body_layout.addWidget(title_labels[0], alignment=QtCore.Qt.AlignLeft)
+        for  idx, label in enumerate(info_labels):
+            body_layout.addWidget(info_labels[idx], alignment=QtCore.Qt.AlignLeft)
+        body_layout.addWidget(title_labels[1], alignment=QtCore.Qt.AlignLeft)
+        body_layout.addWidget(info_labelsF[0], alignment=QtCore.Qt.AlignLeft)
+        totalCot = 0
+        for  idx, label in enumerate(self.cot):
+            totalCot = totalCot + label[7]
+        labelCot = QtWidgets.QLabel(f"Total: ${str(totalCot)}")
+        labelCot.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700; border: none;")
+        body_layout.addWidget(labelCot, alignment=QtCore.Qt.AlignRight)
+
 
         layout.addLayout(body_layout)
 
