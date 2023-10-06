@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtGui import QFont
 import PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem, QStyledItemDelegate, QStyle
 from PyQt5.QtCore import Qt, QSize  
@@ -12,6 +13,7 @@ from db_consulta import get_database_connection
 import datetime
 import locale
 import random
+from PyQt5.QtCore import QPropertyAnimation
 
 
 class ExitDialog(QDialog):
@@ -148,6 +150,7 @@ class HomePage(QWidget):
         image_label.setPixmap(pixmap)
 
         name_label = QLabel(name)
+        name_label.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; font-weight: 900;")
         formatted_price = locale.format_string("%d", price, grouping=True)
         price_label = QLabel(f"${formatted_price}")  # Muestra el precio formateado
         price_label.setStyleSheet("color: #db5e5e; font: 8pt \"Verdana\";font-weight: 900;")
@@ -231,7 +234,6 @@ class HomePage(QWidget):
 
 
     def recreate_cards(self):
-        # Elimina las cartas existentes
         for i in reversed(range(self.grid_layout.count())):
             widget = self.grid_layout.itemAt(i).widget()
             if widget is not None:
@@ -578,7 +580,7 @@ class PreciosPage(QWidget):
         self.card_widgets = []
 
         for index, data in enumerate(self.cot):
-            card_info = self.create_card(index, data[1], data[3], data[0], data[2])
+            card_info = self.create_card(index, data[1], data[3], data[0], data[2], data[4])
             self.card_widgets.append(card_info)
 
         if not self.card_widgets:
@@ -621,10 +623,25 @@ class PreciosPage(QWidget):
 
         self.search_input.textChanged.connect(self.filter_cards)
 
-    def create_card(self, index, name, image_url, id, price):
+    def create_card(self, index, name, image_url, id, price, descr):
         locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
-        image_label = QLabel()
 
+        # Crear un contenedor de tarjeta
+        card_widget = QWidget()
+        card_widget.setStyleSheet("background: #fff;")
+        card_widget.setFixedSize(320, 350)
+
+        # Crear un layout de tarjeta
+        card_layout = QVBoxLayout()
+
+        # Parte delantera de la tarjeta (imagen y título)
+        front_widget = QWidget()
+        front_widget.setStyleSheet("background-color: #fff;")
+        front_layout = QVBoxLayout()
+        back_widget = QWidget()
+        back_widget.setStyleSheet("background-color: #fff;")
+        back_layout = QVBoxLayout()
+        image_label = QLabel()
         try:
             response = requests.get(image_url)
             if response.status_code == 200:
@@ -634,7 +651,6 @@ class PreciosPage(QWidget):
 
                 # Redimensionar la imagen al tamaño deseado (por ejemplo, 300x300)
                 resized_image = original_image.scaled(300, 300, Qt.KeepAspectRatio)
-
                 image_label.setPixmap(resized_image)
             else:
                 image_label.setText("Imagen no disponible")
@@ -642,23 +658,48 @@ class PreciosPage(QWidget):
             image_label.setText("Error al cargar la imagen")
 
         name_label = QLabel(name)
-        name_label.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; font-weight: 900;")
+        name_label.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; font-weight: 900")
         formatted_price = locale.format_string("%d", price, grouping=True)
         price_label = QLabel(f"${formatted_price}")  # Muestra el precio formateado
         price_label.setStyleSheet("color: #db5e5e; font: 8pt \"Verdana\";font-weight: 900;")
 
-        # Crear botones de borrar, ver y editar con iconos
+        front_layout.addWidget(image_label, alignment=Qt.AlignCenter)
+        front_layout.addWidget(name_label, alignment=Qt.AlignCenter)
+        front_layout.addWidget(price_label, alignment=Qt.AlignCenter)
+
+        front_widget.setLayout(front_layout)
+
+        # Parte trasera de la tarjeta (solo título "Descripción")
+        titler = QLabel("Descripción")
+        if descr != '0':
+            text = QLabel(descr)
+        else:
+            text = QLabel("Sin descripción")
+        text.setWordWrap(True)
+        text.setAlignment(Qt.AlignCenter)
+        text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        titler.setStyleSheet("color: #db5e5e; font: 12pt \"Verdana\"; font-weight: 900")
+        back_layout.addWidget(titler, alignment=Qt.AlignTop | Qt.AlignCenter)
+        text.setStyleSheet("color: #db5e5e; font: 10pt \"Verdana\"; font-weight: 900;")
+        back_layout.addWidget(text, alignment=Qt.AlignTop | Qt.AlignCenter)
+        back_widget.setLayout(back_layout)
+
+
         delete_icon = QIcon("icons/delete.png")
         edit_icon = QIcon("icons/ver.png")
+        descrip_icon = QIcon("icons/descrip.png")
 
         # Obtener imágenes de los iconos y redimensionarlas al tamaño deseado
         delete_image = delete_icon.pixmap(80, 80)
         edit_image = edit_icon.pixmap(60, 60)
+        descrip_image = descrip_icon.pixmap(60, 60)
 
         delete_button = QPushButton()
         delete_button.setIcon(QIcon(delete_image))
         edit_button = QPushButton()
         edit_button.setIcon(QIcon(edit_image))
+        descrip_button = QPushButton()
+        descrip_button.setIcon(QIcon(descrip_image))
 
         # Establecer tamaños fijos para los botones
         button_size = QSize(60, 60)
@@ -676,36 +717,35 @@ class PreciosPage(QWidget):
         """
         delete_button.setStyleSheet(button_style)
         edit_button.setStyleSheet(button_style)
+        descrip_button.setStyleSheet(button_style)
 
         delete_button.setFixedSize(button_size)
         edit_button.setFixedSize(button_size)
+        descrip_button.setFixedSize(button_size)
 
         delete_button.setCursor(Qt.PointingHandCursor)
         edit_button.setCursor(Qt.PointingHandCursor)
+        descrip_button.setCursor(Qt.PointingHandCursor)
 
         # Conectar los botones a las funciones correspondientes
         delete_button.clicked.connect(lambda: self.delete_card(id))
         edit_button.clicked.connect(lambda: self.show_formulario(id))
+        descrip_button.clicked.connect(lambda: self.flip_card(card_layout))
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(delete_button)
         button_layout.addWidget(edit_button)
+        button_layout.addWidget(descrip_button)
         button_layout.setAlignment(Qt.AlignCenter)
 
-        card_layout = QVBoxLayout()
-        card_layout.addWidget(image_label, alignment=Qt.AlignCenter)
-        card_layout.addWidget(name_label, alignment=Qt.AlignCenter)
-        card_layout.addWidget(price_label, alignment=Qt.AlignCenter)  # Agregar el precio
+        # Agregar ambas partes al QStackedWidget
+        stacked_widget = QStackedWidget()
+        stacked_widget.addWidget(front_widget)
+        stacked_widget.addWidget(back_widget)
+
+        card_layout.addWidget(stacked_widget, alignment=Qt.AlignCenter)
         card_layout.addLayout(button_layout)
 
-        card_widget = QPushButton()
-        card_widget.setFixedSize(320, 350)
-        card_widget.setStyleSheet(
-            "QPushButton {"
-            "    background-color: white;"
-            "    border-radius: 10px;"
-            "}"
-        )
         card_widget.setLayout(card_layout)
 
         row = index // 5
@@ -713,6 +753,16 @@ class PreciosPage(QWidget):
         self.grid_layout.addWidget(card_widget, row, col)
 
         return {"widget": card_widget, "name": name, "image_url": image_url}
+
+    def flip_card(self, card_layout):
+        # Función para girar la tarjeta
+        stacked_widget = card_layout.itemAt(0).widget()  # Obtiene el QStackedWidget
+
+        # Cambia entre la parte delantera y trasera
+        if stacked_widget.currentIndex() == 0:
+            stacked_widget.setCurrentIndex(1)
+        else:
+            stacked_widget.setCurrentIndex(0)
 
     def filter_cards(self):
         search_text = self.search_input.text().strip().lower()
@@ -776,7 +826,7 @@ class PreciosPage(QWidget):
         # Crea los nuevos widgets de tarjetas con la lista actualizada
         self.card_widgets = []
         for index, data in enumerate(self.cot):
-            card_info = self.create_card(index, data[1], data[3], data[0], data[2])
+            card_info = self.create_card(index, data[1], data[3], data[0], data[2], data[4])
             self.card_widgets.append(card_info)
 
         # Verifica si hay cartas presentes o no
@@ -827,7 +877,7 @@ class Formulario(QtWidgets.QDialog):
     def initUI(self):
         """Setup the login form.
         """
-        self.resize(480, 340)
+        self.resize(480, 400)
         # remove the title bar
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
 
@@ -926,7 +976,7 @@ class Formulario(QtWidgets.QDialog):
 
         self.label_3 = QtWidgets.QLabel(self.widget)
         self.label_3.setStyleSheet("border: none;")
-        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_3)
+        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_3)
 
         self.lineEdit_2 = QtWidgets.QLineEdit(self.widget)
         self.lineEdit_2.setMinimumSize(QtCore.QSize(0, 40))
@@ -940,7 +990,25 @@ class Formulario(QtWidgets.QDialog):
                                       "background: #fff;\n"
                                       "selection-background-color: darkgray;\n"
                                       "}")
-        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+        self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+
+        self.label_4 = QtWidgets.QLabel(self.widget)
+        self.label_4.setStyleSheet("border: none;")
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_4)
+
+        self.lineEdit_3 = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_3.setMinimumSize(QtCore.QSize(0, 40))
+        self.lineEdit_3.setStyleSheet("QLineEdit {\n"
+                                      "color: #db5e5e;\n"
+                                      "font: 15pt \"Verdana\";\n"
+                                      "border: None;\n"
+                                      "border-bottom-color: #db5e5e;\n"
+                                      "border-radius: 10px;\n"
+                                      "padding: 0 8px;\n"
+                                      "background: #fff;\n"
+                                      "selection-background-color: darkgray;\n"
+                                      "}")
+        self.formLayout_2.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.lineEdit_3)
         
 
         self.line = QtWidgets.QFrame(self.widget)
@@ -953,7 +1021,13 @@ class Formulario(QtWidgets.QDialog):
         self.line_2.setStyleSheet("border: 2px solid #db5e5e;")
         self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.formLayout_2.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.line_2)
+        self.formLayout_2.setWidget(3, QtWidgets.QFormLayout.SpanningRole, self.line_2)
+
+        self.line_3 = QtWidgets.QFrame(self.widget)
+        self.line_3.setStyleSheet("border: 2px solid #db5e5e;")
+        self.line_3.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_3.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.formLayout_2.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.line_3)
 
         self.pushButton = QtWidgets.QPushButton(self.widget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -1049,17 +1123,18 @@ class Formulario(QtWidgets.QDialog):
         con = get_database_connection()
         nombre = self.lineEdit.text()
         precio = self.lineEdit_2.text()
+        desc = self.lineEdit_3.text()
         link = get_image_url(nombre)
         read = nombre != '' and precio != '' and link != ''
 
         if read:
             cursor = con.cursor()
             if self.index:  # Si hay un índice, realiza una actualización
-                sql = "UPDATE precios SET nombre = %s, precio = %s, link = %s WHERE idPrecio = %s"
-                data = (nombre, precio, link, self.index)
+                sql = "UPDATE precios SET nombre = %s, precio = %s, link = %s, descripcion = %s WHERE idPrecio = %s"
+                data = (nombre, precio, link, desc, self.index)
             else:  # Si no hay un índice, realiza una inserción
-                sql = "INSERT INTO precios (nombre, precio, link) VALUES (%s, %s, %s)"
-                data = (nombre, precio, link)
+                sql = "INSERT INTO precios (nombre, precio, link, descripcion) VALUES (%s, %s, %s, %s)"
+                data = (nombre, precio, link, desc)
             cursor.execute(sql, data)
             con.commit()
             con.close()
@@ -1080,9 +1155,13 @@ class Formulario(QtWidgets.QDialog):
         self.label_3.setText(_translate(
             "Form",
             "<html><head/><body><p><img src=\"icons/dllar.png\"/></p></body></html>"))
+        self.label_4.setText(_translate(
+            "Form",
+            "<html><head/><body><p><img src=\"icons/descrip.png\"/></p></body></html>"))
         self.pushButton.setText(_translate("Form", "Agregar"))
         self.lineEdit.setPlaceholderText(_translate("Form", "Nombre"))
         self.lineEdit_2.setPlaceholderText(_translate("Form", "Precio"))
+        self.lineEdit_3.setPlaceholderText(_translate("Form", "Breve descripción"))
         #self.pushButton_2.setText(_translate("Form", "Register"))
 
 class CardItemDelegate(QStyledItemDelegate):
@@ -1090,12 +1169,16 @@ class CardItemDelegate(QStyledItemDelegate):
         # Set up the card appearance
         color = QColor(255, 255, 255)  # Background color for the card
         border_color = QColor(219, 94, 94)  # Border color
-        text_color = QColor(0, 0, 0)  # Text color
+        text_color = QColor(219, 94, 94)  # Text color
 
         if option.state & QStyle.State_Selected:
             color = QColor(219, 94, 94)  # Change the background color for selected items
             text_color = QColor(255, 255, 255)  # Change text color for selected items
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(10)
 
+        painter.setFont(font)
         painter.fillRect(option.rect, color)
         painter.setPen(border_color)
         painter.drawRect(option.rect)
@@ -1127,17 +1210,16 @@ class FormularioCot(QtWidgets.QDialog):
     def update_data(self):
         # Actualiza los datos desde la base de datos
         self.cot = self.fetch_precios_from_database()
-                # Limpia y actualiza la vista de la lista
         model = QtGui.QStandardItemModel()
         for option in self.cot:
             item = QtGui.QStandardItem(f"{option[1]} ${str(option[2])}")
             item.setCheckable(True)
             model.appendRow(item)
         self.list_view.setModel(model)
-
-        # Actualiza cualquier otro elemento que necesite cambios
-        self.update_total_price()
-        self.list_view.selectionModel().selectionChanged.connect(self.update_total_price)
+        
+        # Configura la selección para permitir elementos duplicados
+        selection_model = self.list_view.selectionModel()
+        selection_model.clear()  # Limpia la selección actual
 
     def initUI(self):
         self.cot = self.fetch_precios_from_database()
@@ -1233,7 +1315,7 @@ class FormularioCot(QtWidgets.QDialog):
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
 
         self.list_view = QtWidgets.QListView(self.widget)
-        self.list_view.setStyleSheet("border: none")
+        self.list_view.setStyleSheet("border: none;")
         self.list_view.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         model = QtGui.QStandardItemModel()
         for option in self.cot:
@@ -1511,7 +1593,7 @@ class CardInfoDialog(QtWidgets.QDialog):
         for idx, cos in enumerate(self.cot):
             idx = idx + 20
             label2 = QtWidgets.QLabel(f"Fecha: {cos[4]}")
-            label2.setStyleSheet("font: 10pt \"Verdana\"; border: none;")
+            label2.setStyleSheet("font: 10pt \"Verdana\"; border: none; color: #db5e5e;")
             label2.setObjectName(f"label_{idx}")
             info_labelsF.append(label2)  
         
@@ -1522,7 +1604,7 @@ class CardInfoDialog(QtWidgets.QDialog):
 
         for index, title in enumerate(titles):
             label = QtWidgets.QLabel(title)
-            label.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700; border: none;")
+            label.setStyleSheet("font: 12pt \"Verdana\"; font-weight: 700; border: none; color: #db5e5e;")
             title_labels.append(label)
         
 
