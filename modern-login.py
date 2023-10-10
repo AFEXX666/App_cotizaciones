@@ -10,10 +10,10 @@ class LoginForm(QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.main_slide = MainSlide()
-        #self.main_slide.show()
-        #self.close
-        self.setup_ui()
+        self.main_slide = MainSlide()
+        self.main_slide.show()
+        self.close
+        #self.setup_ui()
 
     def setup_ui(self):
         """Setup the login form.
