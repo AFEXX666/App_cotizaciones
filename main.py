@@ -4,7 +4,7 @@ import shutil
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QFont
 import PyQt5
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem, QStyledItemDelegate, QStyle, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QTextEdit, QLabel, QScrollArea, QDialog, QGridLayout, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QStackedWidget, QSizePolicy, QSpacerItem, QStyledItemDelegate, QStyle, QFileDialog, QInputDialog
 from PyQt5.QtCore import Qt, QSize
 import requests
 from api import get_image_url
@@ -1447,6 +1447,7 @@ class FormularioCot(QtWidgets.QDialog):
 
         self.lineEdit_tel = QtWidgets.QLineEdit(self.widget)
         self.lineEdit_tel.setMinimumSize(QtCore.QSize(0, 40))
+        self.lineEdit_tel.setMaxLength(10)
         self.lineEdit_tel.setStyleSheet("""
             QLineEdit {
                 color: #db5e5e;
@@ -1587,18 +1588,22 @@ class FormularioCot(QtWidgets.QDialog):
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-        self.pushButton.clicked.connect(self.added)
+        self.pushButton.clicked.connect(lambda: self.added())
+        self.pushButton.clicked.connect(lambda: self.reset())
 
     def reset(self):
-
         self.lineEdit.setText("")
         self.lineEdit_2.setText("")
+        self.lineEdit_empresa.setText("")
+        self.lineEdit_direccion.setText("")
+        self.lineEdit_tel.setText("")
+        self.lineEdit_dir.setText("")
         self.error_label.setText("")
         self.index = ""
 
     def added(self):
         con = get_database_connection()
-
+        
         cursor = con.cursor()
         sql = "SELECT COUNT(DISTINCT token) FROM cotizaciones;"
         cursor.execute(sql)
@@ -1616,10 +1621,25 @@ class FormularioCot(QtWidgets.QDialog):
         # Obtener los elementos seleccionados en la lista
         selected_indexes = self.list_view.selectedIndexes()
         selected_cot = [self.cot[index.row()] for index in selected_indexes]
+        quant = []
 
         if read:
             if telefono.isdigit():
                 if re.match(r"[^@]+@[^@]+\.[^@]+", dir):
+                    for index in selected_indexes:
+                        item = self.cot[index.row()]
+                        while True:
+                            cantidad, ok = QInputDialog.getInt(self, 'Cantidad', f'Cantidad de {item[1]}:', 1, 1, 1000)
+                            if ok:
+                                quant.append(cantidad)
+                                break  # El usuario ingresó un valor válido, salimos del bucle
+                            else:
+                                # Si el usuario cancela, mostramos un mensaje de advertencia
+                                msg_box = QMessageBox(self)
+                                msg_box.setIcon(QMessageBox.Warning)
+                                msg_box.setText("Debes seleccionar una cantidad.")
+                                msg_box.setWindowTitle("Advertencia")
+                                msg_box.exec_()
 
                     workbook = openpyxl.load_workbook(
                         'archivos/plantilla.xlsx')
@@ -1637,13 +1657,16 @@ class FormularioCot(QtWidgets.QDialog):
                     # sheet['H5'] = self.total_registros[0] + 1
 
                     for i, cot in enumerate(selected_cot):
+                        print(cot)
                         row = 18 + i
                         cell = sheet[f'B{row}']
                         cellF = sheet[f'F{row}']
                         cellG = sheet[f'G{row}']
+                        cellH = sheet[f'H{row}']
                         cell.font = estilo
                         cellF.font = estilo
                         cellG.font = estilo
+                        cellH.font = estilo
 
                         if cell and cell.data_type == 's':
 
@@ -1655,7 +1678,8 @@ class FormularioCot(QtWidgets.QDialog):
                         else:
 
                             cell.value = cot[1].upper()
-                            cellF.value = 1
+                            cellF.value = quant[i]
+                            cellH.value = float(cot[2]) * quant[i]
                             cellG.value = float(cot[2])
 
                     sheet['H5'].font = estilo
@@ -1676,11 +1700,11 @@ class FormularioCot(QtWidgets.QDialog):
                     jpype.shutdownJVM()
                     os.remove(f'archivos/{archivo}.xlsx')
 
-                    for cot in selected_cot:
+                    for idx, cot in enumerate(selected_cot):
                         cursor = con.cursor()
-                        sql = "INSERT INTO cotizaciones (nombre, cliente, fecha, pieza, precio_final, token, telefono, email, archivo, empresa, direccion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                        sql = "INSERT INTO cotizaciones (nombre, cliente, fecha, pieza, precio_final, token, telefono, email, archivo, empresa, direccion, can_pieza) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                         data = (nombre, cliente, fecha_actual,
-                                cot[1], cot[2], token, telefono, dir, archivo, empresa, ubi)
+                                cot[1], cot[2], token, telefono, dir, archivo, empresa, ubi, quant[idx])
                         cursor.execute(sql, data)
                         con.commit()
                     con.close()
@@ -1750,6 +1774,7 @@ class CardInfoDialog(QtWidgets.QDialog):
         return cot
 
     def initUI(self):
+        con = get_database_connection()
         self.cot = self.cotizaciones()
         print(self.cot)
         self.setFixedSize(900, 700)
@@ -1808,52 +1833,44 @@ class CardInfoDialog(QtWidgets.QDialog):
         body_layout = QtWidgets.QVBoxLayout()
         body_layout.setContentsMargins(15, 15, 15, 15)
 
-        info_labels = []
-        info_labelsF = []
+        table = QtWidgets.QTableWidget()
+        table.setColumnCount(5) 
+        table.setHorizontalHeaderLabels(["Piezas", "Descripcion", "Cantidad", "Precio", "Total"])
 
         for idx, cos in enumerate(self.cot):
-            print(cos[5])
-            label = QtWidgets.QLabel(f"{cos[6]}      ${cos[7]}")
-            label.setStyleSheet(
-                "font: 10pt \"Verdana\"; border: none; color: #db5e5e;")
-            label.setObjectName(f"label_{idx}")
-            info_labels.append(label)
+            desc = []
+            table.insertRow(idx)
+            table.setItem(idx, 0, QtWidgets.QTableWidgetItem(f"{cos[6]}"))
+            des = cos[6]
+            cursor = con.cursor()
+            sql = f"SELECT descripcion FROM precios WHERE nombre = '{des}';"
+            cursor.execute(sql)
+            desc = cursor.fetchall()
+            print(desc)
+            
+            table.setItem(idx, 1, QtWidgets.QTableWidgetItem(f"{desc[idx][0]}"))
+            table.setItem(idx, 2, QtWidgets.QTableWidgetItem(f"{cos[13]}"))
+            table.setItem(idx, 3, QtWidgets.QTableWidgetItem(f"${cos[7]}"))
+            total =  cos[7] * cos[13]
+            table.setItem(idx, 4, QtWidgets.QTableWidgetItem(f"${total}"))
+        con.close()
+        totalCot = sum(cos[7] * cos[13] for cos in self.cot)
+        total_row = table.rowCount()
+        table.insertRow(total_row)
+        table.setItem(total_row, 4, QtWidgets.QTableWidgetItem(f"Total: ${totalCot}"))
+        table.item(total_row, 4).setFont(QtGui.QFont("Verdana", 8, QtGui.QFont.Bold))
 
-        for idx, cos in enumerate(self.cot):
-            idx = idx + 20
-            label2 = QtWidgets.QLabel(f"Fecha: {cos[4]}")
-            label2.setStyleSheet(
-                "font: 10pt \"Verdana\"; border: none; color: #db5e5e;")
-            label2.setObjectName(f"label_{idx}")
-            info_labelsF.append(label2)
+        # Establecer ancho de columnas
+        table.setColumnWidth(0, 200)
+        table.setColumnWidth(1, 200)
+        table.setColumnWidth(2, 150)
 
-        title_labels = []
-        titles = ["Piezas", "Fecha"]
-
-        for index, title in enumerate(titles):
-            label = QtWidgets.QLabel(title)
-            label.setStyleSheet(
-                "font: 12pt \"Verdana\"; font-weight: 700; border: none; color: #db5e5e;")
-            title_labels.append(label)
-
-        body_layout.addWidget(title_labels[0], alignment=QtCore.Qt.AlignLeft)
-        for idx, label in enumerate(info_labels):
-            body_layout.addWidget(
-                info_labels[idx], alignment=QtCore.Qt.AlignLeft)
-        body_layout.addWidget(title_labels[1], alignment=QtCore.Qt.AlignLeft)
-        body_layout.addWidget(info_labelsF[0], alignment=QtCore.Qt.AlignLeft)
-        totalCot = 0
-        for idx, label in enumerate(self.cot):
-            totalCot = totalCot + label[7]
-        labelCot = QtWidgets.QLabel(f"Total: ${str(totalCot)}")
-        labelCot.setStyleSheet(
-            "font: 12pt \"Verdana\"; font-weight: 700; border: none;")
-        body_layout.addWidget(labelCot, alignment=QtCore.Qt.AlignRight)
+        body_layout.addWidget(table)
+        body_layout.setStretch(0, 1)
 
         layout.addLayout(body_layout)
 
     def showEvent(self, event):
-
         screen_geometry = QtWidgets.QDesktopWidget().screenGeometry()
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2

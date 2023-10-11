@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from PyQt5 import QtCore, QtWidgets
 from db_consulta import get_database_connection
 from werkzeug.security import check_password_hash, generate_password_hash
